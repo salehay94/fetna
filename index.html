@@ -21,22 +21,22 @@
         <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني" value="mr.saleh.ay.94@gmail.com" />
         <input type="password" id="auth-pass" class="auth-input" placeholder="كلمة المرور" value="123456" />
         
-        <button class="btn btn-primary" onclick="handleAuthLogin()">دخول / تسجيل حساب</button>
-        <button class="text-link-btn" onclick="openForgotPassModal()">نسيت كلمة المرور؟</button>
+        <button id="btn-login-submit" class="btn btn-primary">دخول / تسجيل حساب</button>
+        <button id="btn-open-forgot" class="text-link-btn">نسيت كلمة المرور؟</button>
       </div>
     </section>
 
     <!-- 2. الشاشة الرئيسية -->
     <section id="screen-home" class="screen home-bg">
       <div class="top-player-bar">
-        <div class="player-pill" onclick="openProfileModal()">👤 <span id="display-player-name">saleh</span> ⚙️</div>
-        <div class="stat-badge" onclick="alert('متجر الشحن قيد التجهيز للدفع الإلكتروني الرسمي')">🪙 <span id="home-coins">150</span></div>
+        <div id="btn-open-profile" class="player-pill">👤 <span id="display-player-name">saleh</span> ⚙️</div>
+        <div class="stat-badge">🪙 <span id="home-coins">150</span></div>
       </div>
 
       <div class="overlay-content">
         <div class="action-buttons">
-          <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
-          <button class="btn btn-secondary" onclick="showScreen('screen-map')">خريطة المراحل</button>
+          <button id="btn-continue-game" class="btn btn-primary">متابعة اللعب</button>
+          <button id="btn-to-map" class="btn btn-secondary">خريطة المراحل</button>
         </div>
       </div>
     </section>
@@ -44,7 +44,7 @@
     <!-- 3. شاشة خريطة المراحل -->
     <section id="screen-map" class="screen">
       <header class="game-header">
-        <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
+        <button id="btn-map-back" class="nav-back">⬅</button>
         <h2>خريطة المراحل</h2>
         <div class="stat-badge">🪙 <span id="map-coins">150</span></div>
       </header>
@@ -54,14 +54,14 @@
     <!-- 4. شاشة اللعب التفاعلية -->
     <section id="screen-game" class="screen">
       <header class="game-header">
-        <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
+        <button id="btn-game-exit" class="nav-back">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
         <div class="stat-badge">🪙 <span id="game-coins">150</span></div>
       </header>
 
       <div class="helpers-bar">
-        <button class="help-btn" id="hint-letter-btn" onclick="useHintRevealLetter()">💡 تلميح (20 🪙)</button>
-        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 🪙)</button>
+        <button id="hint-letter-btn" class="help-btn">💡 تلميح (20 🪙)</button>
+        <button id="hint-skip-btn" class="help-btn">⏩ تخطي (50 🪙)</button>
       </div>
 
       <div class="question-card">
@@ -69,13 +69,13 @@
         <p id="question-text">جاري تحميل السؤال...</p>
       </div>
 
-      <!-- واجهة تجميع الحروف -->
+      <!-- تجميع الحروف -->
       <div id="letters-mode-area">
         <div id="answer-boxes" class="answer-row"></div>
         <div class="letters-keyboard" id="letters-keyboard"></div>
       </div>
 
-      <!-- واجهة الاختيار من 4 -->
+      <!-- الاختيار من 4 -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
     </section>
 
@@ -84,33 +84,27 @@
       <div class="modal-card">
         <div class="modal-header">
           <h3>استعادة كلمة المرور</h3>
-          <button class="close-btn" onclick="closeModal('forgot-modal')">✕</button>
+          <button id="btn-close-forgot" class="close-btn">✕</button>
         </div>
         <p class="store-desc">اكتب بريدك المسجل وسيرسل لك النظام كلمة سر جديدة تلقائياً:</p>
         <input type="email" id="reset-email-input" class="auth-input" placeholder="بريدك الإلكتروني" />
-        <button class="btn btn-primary" onclick="submitPasswordReset()">إرسال كلمة سر جديدة</button>
+        <button id="btn-submit-reset" class="btn btn-primary">إرسال كلمة سر جديدة</button>
       </div>
     </div>
 
-    <!-- نافذة تعديل الحساب -->
+    <!-- نافذة الحساب -->
     <div id="profile-modal" class="modal-overlay">
       <div class="modal-card">
         <div class="modal-header">
           <h3>إعدادات الحساب</h3>
-          <button class="close-btn" onclick="closeModal('profile-modal')">✕</button>
+          <button id="btn-close-profile" class="close-btn">✕</button>
         </div>
         <div style="text-align: right; margin-bottom: 15px;">
           <label style="font-size: 13px; color: #64748B;">تعديل كلمة المرور:</label>
           <input type="password" id="new-password-input" class="auth-input" placeholder="كلمة المرور الجديدة" />
-          <button class="btn btn-secondary" onclick="submitChangePassword()" style="margin-bottom: 15px;">حفظ كلمة المرور</button>
-          
-          <label style="font-size: 13px; color: #64748B;">ربط الحساب:</label>
-          <button class="btn btn-google" onclick="linkGoogleAccount()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G">
-            ربط مع حساب Google
-          </button>
+          <button id="btn-save-new-pass" class="btn btn-secondary" style="margin-bottom: 15px;">حفظ كلمة المرور</button>
         </div>
-        <button class="btn" style="background: #E57373; color: #FFF;" onclick="logoutPlayer()">تسجيل خروج</button>
+        <button id="btn-player-logout" class="btn" style="background: #E57373; color: #FFF;">تسجيل خروج</button>
       </div>
     </div>
 
