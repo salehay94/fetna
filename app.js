@@ -1,4 +1,4 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyIkOXySRCaVxR8f_yy6WVQXyTHMwSsFnx1Bo4NnoCjSPKRpi84kNAXUktlILJIWok8_A/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBRgQ50Yym4IH3NFt8Y45pa2hs_6UvlsQUPE4nLPsvt8UX78KlQD1lsZOo5338YRRuKQ/exec';
 
 var playerData = {
   name: '',
@@ -20,10 +20,10 @@ function showScreen(screenId) {
 }
 
 function checkExistingUser() {
-  // إعادة ضبط الجلسة العالقة لمرة واحدة لتبدأ المراحل الـ 230 من البداية
-  if (localStorage.getItem('fetnah_cache_flush_v500') !== 'done') {
+  // تصفير الجلسات القديمة العالقة لمرة واحدة حتى يبدأ المستخدم بعدد المراحل الجديد
+  if (localStorage.getItem('fetnah_v700_flush') !== 'yes') {
     localStorage.removeItem('fetnah_user_session_v6');
-    localStorage.setItem('fetnah_cache_flush_v500', 'done');
+    localStorage.setItem('fetnah_v700_flush', 'yes');
   }
 
   var saved = localStorage.getItem('fetnah_user_session_v6');
@@ -41,12 +41,14 @@ function checkExistingUser() {
   showScreen('screen-auth');
 }
 
-async function syncCoinsFromSheet(email) {
+function syncCoinsFromSheet(email) {
   if (!APPS_SCRIPT_URL || !email) return;
-  try {
-    var response = await fetch(APPS_SCRIPT_URL + '?action=get_player&email=' + encodeURIComponent(email));
-    if (response.ok) {
-      var resData = await response.json();
+  fetch(APPS_SCRIPT_URL + '?action=get_player&email=' + encodeURIComponent(email))
+    .then(function(res) {
+      if (!res.ok) throw new Error('Network error');
+      return res.json();
+    })
+    .then(function(resData) {
       if (resData && resData.status === 'success') {
         playerData.coins = Number(resData.coins);
         if (resData.maxStage) playerData.maxStage = Number(resData.maxStage);
@@ -54,10 +56,10 @@ async function syncCoinsFromSheet(email) {
         updateUI();
         if (typeof renderMapNodes === 'function') renderMapNodes();
       }
-    }
-  } catch (err) {
-    console.log('تعذر مزامنة الرصيد حالياً:', err);
-  }
+    })
+    .catch(function(err) {
+      console.log('تعذر مزامنة بيانات اللاعب حالياً:', err);
+    });
 }
 
 function handleAuthLogin() {
@@ -123,7 +125,7 @@ function updateUI() {
 
 function continueCurrentStage() {
   if (typeof stages === 'undefined' || stages.length === 0) {
-    alert('جاري تجهيز المراحل... انتظر لحظة واحدة.');
+    alert('جاري تجهيز المراحل... يرجى الانتظار لحظة.');
     return;
   }
   var target = playerData.maxStage || 1;
