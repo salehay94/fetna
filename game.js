@@ -1,19 +1,8 @@
-// معرف ملف جوجل شيت الخاص بلعبة فطنة
+// نقرأ الصفحة الأولى من الشيت مباشرة بدون تسميات عبر gid=0
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
 
-// تشفير الأسماء العربية للروابط لضمان عدم توقف الطلب
-const URL_LETTERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('المراحل')}`;
-
-// المراحل الافتراضية تعمل فوراً في كل الظروف حتى لو تأخر اتصال الشيت
-const fallbackStages = [
-  { id: 1, question: "من هو أول الأنبياء عليهم السلام؟", answer: "آدم", letters: ["آ","د","م","س","و","ي","ن","ل"] },
-  { id: 2, question: "أين ولد النبي محمد صلى الله عليه وسلم؟", answer: "مكة", letters: ["م","ك","ة","ق","د","س","ر","ح"] },
-  { id: 3, question: "من هو خاتم الأنبياء والمرسلين؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي","ف"] },
-  { id: 4, question: "ما هي أول قبلة للمسلمين؟", answer: "القدس", letters: ["ا","ل","ق","د","س","م","ك","ة"] },
-  { id: 5, question: "ما هي أطول سورة في القرآن الكريم؟", answer: "البقرة", letters: ["ا","ل","ب","ق","ر","ة","ع","م"] }
-];
-
-let stages = [...fallbackStages];
+let stages = [];
 let currentPlayingStage = 1;
 let userGuess = [];
 
@@ -23,13 +12,11 @@ let playerData = {
   coins: 150
 };
 
-// 1. فحص الحساب
+// فحص الحساب
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_live_player_v3');
+  const saved = localStorage.getItem('fetnah_game_player_v4');
   if (saved) {
-    try {
-      playerData = JSON.parse(saved);
-    } catch(e) {}
+    try { playerData = JSON.parse(saved); } catch(e) {}
   }
   updateUI();
   renderMapNodes();
@@ -39,10 +26,7 @@ function checkExistingUser() {
 function loginUser() {
   const nameInput = document.getElementById('player-name-input');
   const name = nameInput ? nameInput.value.trim() : '';
-  if (!name) {
-    alert("يرجى إدخال اسم اللاعب للمتابعة!");
-    return;
-  }
+  if (!name) return alert("يرجى إدخال اسمك!");
   playerData.name = name;
   savePlayerData();
   updateUI();
@@ -51,63 +35,60 @@ function loginUser() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_live_player_v3', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_game_player_v4', JSON.stringify(playerData));
 }
 
 function updateUI() {
-  const nameLabel = document.getElementById('display-player-name');
-  if (nameLabel) nameLabel.innerText = playerData.name || 'اللاعب';
-
-  const hCoins = document.getElementById('home-coins');
-  const mCoins = document.getElementById('map-coins');
-  const gCoins = document.getElementById('game-coins');
-
-  if (hCoins) hCoins.innerText = playerData.coins;
-  if (mCoins) mCoins.innerText = playerData.coins;
-  if (gCoins) gCoins.innerText = playerData.coins;
+  const nameEl = document.getElementById('display-player-name');
+  if (nameEl) nameEl.innerText = playerData.name || 'اللاعب';
+  ['home-coins', 'map-coins', 'game-coins'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = playerData.coins;
+  });
 }
 
-// 2. قراءة جوجل شيت بدقة وأمان
-async function loadAllStages() {
+// قراءة بيانات الشيت وقراءة كل الأنماط
+async function loadStagesFromSheet() {
   try {
-    const res = await fetch(URL_LETTERS);
-    if (!res.ok) throw new Error("تعذر جلب الشيت");
+    const res = await fetch(SHEET_URL);
     const text = await res.text();
     const json = JSON.parse(text.substring(47).slice(0, -2));
     const rows = json.table.rows;
 
-    const loaded = [];
+    const parsed = [];
     rows.forEach(r => {
       const c = r.c;
+      // تجاهل صفوف الترويسة والإحصائيات
       if (c && c[0] && !isNaN(c[0].v)) {
         const id = parseInt(c[0].v);
-        // التوافق التلقائي مع ترتيب الأعمدة في الشيت
-        const qText = c[2] ? c[2].v : (c[1] ? c[1].v : '');
-        const ans = c[3] ? String(c[3].v).trim() : (c[2] ? String(c[2].v).trim() : '');
-        const rawLetters = c[4] ? String(c[4].v) : (c[3] ? String(c[3].v) : '');
-        const lettersList = rawLetters && String(rawLetters).includes(',') 
-          ? rawLetters.split(',').map(s => s.trim()) 
-          : ans.split('');
+        const type = c[1] ? String(c[1].v).trim() : 'تجميع حروف';
+        const qText = c[2] ? String(c[2].v).trim() : '';
+        const ans = c[3] ? String(c[3].v).trim() : '';
+        const rawAux = c[4] ? String(c[4].v).trim() : '';
 
-        if (id && qText && ans) {
-          loaded.push({ id, question: qText, answer: ans, letters: lettersList });
+        // إذا كان السؤال اختيار من متعدد
+        if (type.includes('خيار') || type.includes('خيارات')) {
+          const choices = rawAux.split(',').map(s => s.trim());
+          parsed.push({ id, type: 'choices', question: qText, answer: ans, choices });
+        } else {
+          // نمط تجميع الحروف العادي
+          const letters = rawAux.includes(',') ? rawAux.split(',').map(s => s.trim()) : ans.split('');
+          parsed.push({ id, type: 'letters', question: qText, answer: ans, letters });
         }
       }
     });
 
-    if (loaded.length > 0) {
-      stages = loaded;
-      console.log("تم تحديث المراحل من الشيت بنجاح:", stages.length);
+    if (parsed.length > 0) {
+      stages = parsed;
+      console.log("تم تحميل المراحل بنجاح من الشيت:", stages.length);
       renderMapNodes();
     }
-  } catch (err) {
-    console.warn("تنبيه: تم استخدام المراحل الجاهزة بنجاح لضمان استمرار اللعب:", err);
-    stages = [...fallbackStages];
-    renderMapNodes();
+  } catch (e) {
+    console.error("فشل قراءة الشيت:", e);
   }
 }
 
-// 3. رسم الخريطة مع حالات القفل والإعادة
+// خريطة المراحل
 function renderMapNodes() {
   const container = document.getElementById('map-container');
   if (!container) return;
@@ -127,7 +108,7 @@ function renderMapNodes() {
     } else {
       node.className = 'stage-node locked';
       node.innerText = '🔒';
-      node.onclick = () => alert("هذه المرحلة مقفولة حتى تجتاز المراحل السابقة!");
+      node.onclick = () => alert("المرحلة مقفولة! أنجز المراحل السابقة أولاً.");
     }
 
     container.appendChild(node);
@@ -138,23 +119,74 @@ function continueCurrentStage() {
   startStage(playerData.maxStage);
 }
 
+// بدء المرحلة وتشغيل الواجهة المناسبة لنوعها
 function startStage(stageNum) {
   currentPlayingStage = stageNum;
   const stage = stages.find(s => s.id === stageNum) || stages[0];
-  if (!stage) {
-    alert("المرحلة غير متوفرة!");
-    return;
-  }
+  if (!stage) return alert("المرحلة غير متوفرة بعد في الشيت!");
 
-  userGuess = [];
   document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
   document.getElementById('question-text').innerText = stage.question;
+  
+  const typeBadge = document.getElementById('stage-badge-type');
+  const lettersArea = document.getElementById('letters-mode-area');
+  const choiceArea = document.getElementById('choice-mode-area');
+  const hintBtn = document.getElementById('hint-letter-btn');
 
-  renderAnswerSlots(stage.answer.length);
-  renderKeyboard(stage.letters);
+  if (stage.type === 'choices') {
+    // تشغيل نمط الـ 4 خيارات
+    typeBadge.innerText = 'اختر الإجابة الصحيحة';
+    lettersArea.style.display = 'none';
+    choiceArea.style.display = 'flex';
+    hintBtn.style.display = 'none'; // إخفاء كشف الحرف في نمط الخيارات
+
+    renderChoices(stage.choices, stage.answer);
+  } else {
+    // تشغيل نمط تجميع الحروف
+    typeBadge.innerText = 'تجميع حروف';
+    lettersArea.style.display = 'block';
+    choiceArea.style.display = 'none';
+    hintBtn.style.display = 'inline-block';
+
+    userGuess = [];
+    renderAnswerSlots(stage.answer.length);
+    renderKeyboard(stage.letters);
+  }
+
   showScreen('screen-game');
 }
 
+// عرض الخيارات الأربعة
+function renderChoices(choices, correctAnswer) {
+  const container = document.getElementById('choice-mode-area');
+  container.innerHTML = '';
+
+  choices.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerText = opt;
+    btn.onclick = () => handleChoiceSelect(opt, correctAnswer, btn);
+    container.appendChild(btn);
+  });
+}
+
+function handleChoiceSelect(selected, correct, btn) {
+  if (selected === correct) {
+    btn.classList.add('correct');
+    setTimeout(() => {
+      alert("إجابة صحيحة ممتاز! 🎉");
+      onStagePassed();
+    }, 200);
+  } else {
+    btn.classList.add('wrong');
+    setTimeout(() => {
+      alert("إجابة خاطئة! حاول مرة أخرى.");
+      btn.classList.remove('wrong');
+    }, 200);
+  }
+}
+
+// تجميع الحروف
 function renderAnswerSlots(count) {
   const container = document.getElementById('answer-boxes');
   container.innerHTML = '';
@@ -179,40 +211,43 @@ function renderKeyboard(letters) {
 }
 
 function selectLetter(char, btn) {
-  const stage = stages.find(s => s.id === currentPlayingStage) || stages[0];
+  const stage = stages.find(s => s.id === currentPlayingStage);
   if (userGuess.length >= stage.answer.length) return;
 
-  userGuess.push({ char: char, btn: btn });
+  userGuess.push({ char, btn });
   btn.style.visibility = 'hidden';
   updateSlots();
 
   if (userGuess.length === stage.answer.length) {
-    const word = userGuess.map(item => item.char).join('');
+    const word = userGuess.map(i => i.char).join('');
     if (word === stage.answer) {
       setTimeout(() => {
         alert("أحسنت! إجابة صحيحة 🎉");
-
-        if (currentPlayingStage === playerData.maxStage) {
-          playerData.maxStage++;
-          playerData.coins += 15;
-          savePlayerData();
-          updateUI();
-          renderMapNodes();
-        }
-
-        if (currentPlayingStage < stages.length) {
-          startStage(currentPlayingStage + 1);
-        } else {
-          alert("تبارك الله! ختمت جميع المراحل المتوفرة.");
-          showScreen('screen-map');
-        }
-      }, 250);
+        onStagePassed();
+      }, 200);
     } else {
       setTimeout(() => {
         alert("إجابة غير صحيحة، حاول مجدداً!");
         resetGuess();
-      }, 250);
+      }, 200);
     }
+  }
+}
+
+function onStagePassed() {
+  if (currentPlayingStage === playerData.maxStage) {
+    playerData.maxStage++;
+    playerData.coins += 15;
+    savePlayerData();
+    updateUI();
+    renderMapNodes();
+  }
+
+  if (currentPlayingStage < stages.length) {
+    startStage(currentPlayingStage + 1);
+  } else {
+    alert("تبارك الله! ختمت جميع المراحل المتوفرة حالياً في الشيت.");
+    showScreen('screen-map');
   }
 }
 
@@ -224,25 +259,21 @@ function updateSlots() {
 }
 
 function resetGuess() {
-  userGuess.forEach(item => {
-    if (item.btn) item.btn.style.visibility = 'visible';
-  });
+  userGuess.forEach(i => { if (i.btn) i.btn.style.visibility = 'visible'; });
   userGuess = [];
   updateSlots();
 }
 
+// المساعدات
 function useHintRevealLetter() {
-  const cost = 20;
-  if (playerData.coins < cost) {
-    alert("رصيدك لا يكفي! تحتاج 20 🪙 على الأقل.");
-    return;
-  }
-
+  if (playerData.coins < 20) return alert("تحتاج 20 🪙 على الأقل!");
   const stage = stages.find(s => s.id === currentPlayingStage);
+  if (stage.type !== 'letters') return;
+
   const curLen = userGuess.length;
   if (curLen < stage.answer.length) {
     const correctChar = stage.answer[curLen];
-    playerData.coins -= cost;
+    playerData.coins -= 20;
     savePlayerData();
     updateUI();
 
@@ -257,47 +288,31 @@ function useHintRevealLetter() {
 }
 
 function useHintSkipStage() {
-  const cost = 50;
-  if (playerData.coins < cost) {
-    alert("رصيدك لا يكفي لتخطي المرحلة!");
-    return;
-  }
-
+  if (playerData.coins < 50) return alert("تحتاج 50 🪙 على الأقل لتخطي المرحلة!");
   if (confirm("هل تريد إنفاق 50 🪙 وتخطي هذا السؤال؟")) {
-    playerData.coins -= cost;
-    if (currentPlayingStage === playerData.maxStage) {
-      playerData.maxStage++;
-    }
+    playerData.coins -= 50;
     savePlayerData();
     updateUI();
-    renderMapNodes();
-
-    if (currentPlayingStage < stages.length) {
-      startStage(currentPlayingStage + 1);
-    } else {
-      showScreen('screen-map');
-    }
+    onStagePassed();
   }
 }
 
 function openStore() {
-  alert("متجر الشحن قيد التجهيز للدفع الإلكتروني الرسمي، ولا يوجد شراء حالياً.");
+  alert("متجر النقاط قيد التجهيز للدفع الإلكتروني الرسمي.");
 }
 
 function closeStore() {
-  const modal = document.getElementById('store-modal');
-  if (modal) modal.style.display = 'none';
+  const m = document.getElementById('store-modal');
+  if (m) m.style.display = 'none';
 }
 
-function showScreen(screenId) {
+function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(screenId);
+  const target = document.getElementById(id);
   if (target) target.classList.add('active');
 }
 
-// البدء
 window.onload = () => {
-  renderMapNodes();
   checkExistingUser();
-  loadAllStages();
+  loadStagesFromSheet();
 };
