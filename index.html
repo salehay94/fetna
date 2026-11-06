@@ -1,69 +1,131 @@
-function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("اللاعبين");
-    var data = JSON.parse(e.postData.contents);
-    var action = data.action;
-    var email = data.email ? data.email.trim().toLowerCase() : "";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فِطنة - ألغاز وكلمات إسلامية</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
 
-    var rows = sheet.getDataRange().getValues();
+  <div class="mobile-frame">
 
-    // 1. تسجيل أو جلب بيانات اللاعب
-    if (action === "sync_player") {
-      var found = false;
-      for (var i = 1; i < rows.length; i++) {
-        if (rows[i][2].toString().toLowerCase() === email) {
-          // تحديث المرحلة والرصيد الحالي
-          sheet.getRange(i + 1, 5).setValue(data.maxStage);
-          sheet.getRange(i + 1, 6).setValue(data.coins);
-          found = true;
-          return ContentService.createTextOutput(JSON.stringify({
-            status: "success",
-            password: rows[i][3],
-            maxStage: rows[i][4],
-            coins: rows[i][5]
-          })).setMimeType(ContentService.MimeType.JSON);
-        }
-      }
-      if (!found) {
-        // إضافة لاعب جديد للشيت
-        var newId = rows.length;
-        sheet.appendRow([newId, data.name, email, data.password || "123456", data.maxStage || 1, data.coins || 150]);
-        return ContentService.createTextOutput(JSON.stringify({ status: "created" })).setMimeType(ContentService.MimeType.JSON);
-      }
-    }
+    <!-- 1. شاشة تسجيل الدخول / حساب جديد -->
+    <section id="screen-auth" class="screen auth-bg">
+      <div class="auth-box">
+        <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
+        <p class="auth-sub">سجّل بحسابك لمزامنة مراحل تقدمك ورصيدك</p>
+        
+        <input type="text" id="auth-name" class="auth-input" placeholder="اسم اللاعب" />
+        <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني" />
+        <input type="password" id="auth-pass" class="auth-input" placeholder="كلمة المرور" />
+        
+        <button class="btn btn-primary" onclick="handleAuthLogin()">دخول / تسجيل حساب</button>
+        <button class="text-link-btn" onclick="openForgotPassModal()">نسيت كلمة المرور؟</button>
+      </div>
+    </section>
 
-    // 2. طلب استعادة كلمة المرور وإرسال إيميل تلقائي
-    if (action === "reset_password") {
-      for (var i = 1; i < rows.length; i++) {
-        if (rows[i][2].toString().toLowerCase() === email) {
-          var playerName = rows[i][1];
-          var newPass = "Fitna-" + Math.floor(1000 + Math.random() * 9000);
-          sheet.getRange(i + 1, 4).setValue(newPass); // تحديث كلمة المرور بالشيت
+    <!-- 2. الشاشة الرئيسية -->
+    <section id="screen-home" class="screen home-bg">
+      <div class="top-player-bar">
+        <div class="player-pill" onclick="openProfileModal()">👤 <span id="display-player-name">saleh</span> ⚙️</div>
+        <div class="stat-badge" onclick="alert('متجر الشحن قيد التجهيز للدفع الإلكتروني الرسمي')">🪙 <span id="home-coins">150</span></div>
+      </div>
 
-          // إرسال الإيميل التلقائي
-          MailApp.sendEmail({
-            to: email,
-            subject: "استعادة حسابك في لعبة فِطنة",
-            body: "أهلاً بك يا " + playerName + "،\n\nتلقينا طلباً لاستعادة كلمة المرور الخاصة بحسابك في لعبة فِطنة.\n\nكلمة مرورك الجديدة هي: " + newPass + "\n\nيمكنك تسجيل الدخول بها الآن وتغييرها من قائمة الإعدادات داخل اللعبة في أي وقت."
-          });
+      <div class="overlay-content">
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
+          <button class="btn btn-secondary" onclick="showScreen('screen-map')">خريطة المراحل</button>
+        </div>
+      </div>
+    </section>
 
-          return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({ status: "not_found" })).setMimeType(ContentService.MimeType.JSON);
-    }
+    <!-- 3. شاشة خريطة المراحل -->
+    <section id="screen-map" class="screen">
+      <header class="game-header">
+        <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
+        <h2>خريطة المراحل</h2>
+        <div class="stat-badge">🪙 <span id="map-coins">150</span></div>
+      </header>
+      <div class="map-path" id="map-container"></div>
+    </section>
 
-    // 3. تغيير كلمة المرور من داخل اللعبة
-    if (action === "change_password") {
-      for (var i = 1; i < rows.length; i++) {
-        if (rows[i][2].toString().toLowerCase() === email) {
-          sheet.getRange(i + 1, 4).setValue(data.newPassword);
-          return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
-        }
-      }
-    }
+    <!-- 4. شاشة اللعب التفاعلية الشاملة -->
+    <section id="screen-game" class="screen">
+      <header class="game-header">
+        <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
+        <span id="stage-title" class="stage-indicator">المرحلة 1</span>
+        <div class="stat-badge">🪙 <span id="game-coins">150</span></div>
+      </header>
 
-  } catch(error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
+      <div class="helpers-bar">
+        <button class="help-btn" id="hint-letter-btn" onclick="useHintRevealLetter()">💡 تلميح (20 🪙)</button>
+        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 🪙)</button>
+      </div>
+
+      <div class="question-card">
+        <span id="stage-badge-type" class="type-pill">تجميع حروف</span>
+        <p id="question-text">جاري تحميل السؤال...</p>
+      </div>
+
+      <!-- واجهة تجميع الحروف -->
+      <div id="letters-mode-area">
+        <div id="answer-boxes" class="answer-row"></div>
+        <div class="letters-keyboard" id="letters-keyboard"></div>
+      </div>
+
+      <!-- واجهة الاختيار من 4 -->
+      <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
+
+      <!-- واجهة الكلمات المتقاطعة -->
+      <div id="crossword-mode-area" style="display: none; padding: 15px; text-align: center;">
+        <div id="crossword-grid" class="cross-grid"></div>
+        <div class="cross-hints">
+          <p id="cross-hint-h"><strong>أفقي:</strong> ...</p>
+          <p id="cross-hint-v"><strong>عمودي:</strong> ...</p>
+        </div>
+        <div class="letters-keyboard" id="cross-keyboard"></div>
+      </div>
+    </section>
+
+    <!-- نافذة استعادة كلمة المرور -->
+    <div id="forgot-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>استعادة كلمة المرور</h3>
+          <button class="close-btn" onclick="closeModal('forgot-modal')">✕</button>
+        </div>
+        <p class="store-desc">اكتب بريدك الإلكتروني المسجل وسنرسل لك كلمة سر مؤقتة جديدة فوراً:</p>
+        <input type="email" id="reset-email-input" class="auth-input" placeholder="بريدك الإلكتروني" />
+        <button class="btn btn-primary" onclick="submitPasswordReset()">إرسال كلمة سر جديدة</button>
+      </div>
+    </div>
+
+    <!-- نافذة تعديل الحساب وربط جوجل -->
+    <div id="profile-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>إعدادات حسابك</h3>
+          <button class="close-btn" onclick="closeModal('profile-modal')">✕</button>
+        </div>
+        <div style="text-align: right; margin-bottom: 15px;">
+          <label style="font-size: 13px; color: #64748B;">تغيير كلمة المرور:</label>
+          <input type="password" id="new-password-input" class="auth-input" placeholder="كلمة المرور الجديدة" />
+          <button class="btn btn-secondary" onclick="submitChangePassword()" style="margin-bottom: 15px;">حفظ كلمة المرور</button>
+          
+          <label style="font-size: 13px; color: #64748B;">حساب Google المرتبط:</label>
+          <button class="btn btn-google" onclick="linkGoogleAccount()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G">
+            ربط مع حساب Google
+          </button>
+        </div>
+        <button class="btn" style="background: #E57373; color: #FFF;" onclick="logoutPlayer()">تسجيل خروج</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
