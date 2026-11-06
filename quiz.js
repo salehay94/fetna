@@ -1,309 +1,270 @@
-var currentPlayingStage = 1;
-var userGuess = [];
-var nextActionCallback = null;
+var currentStageIndex = 0;
+var currentInputLetters = [];
+var targetAnswer = '';
 
-var praisePhrases = [
-  'ما شاء الله!',
-  'تبارك الرحمن!',
-  'الحمد لله!',
-  'تبارك الله!',
-  'لا تنس ذكر الله!',
-  'سبحان الله وبحمده!'
-];
-
-function getRandomPraise() {
-  var index = Math.floor(Math.random() * praisePhrases.length);
-  return praisePhrases[index];
-}
-
-function getCurrentStageReward() {
-  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  if (!stage) return 15;
-  var r = stage.reward || stage['النقاط'] || stage['المكافأة'] || stage.points;
-  return (r && !isNaN(r)) ? Number(r) : 15;
-}
-
-function showGameAlert(isSuccess, title, desc, btnText, callback) {
-  var modal = document.getElementById('result-modal');
-  var card = document.getElementById('result-card-box');
-  var icon = document.getElementById('result-icon');
-  var t = document.getElementById('result-title');
-  var d = document.getElementById('result-desc');
-  var btn = document.getElementById('result-btn');
-  var homeBtn = document.getElementById('result-home-btn');
-
-  if (!modal) {
-    if (callback) callback();
+function startStage(stageNumber) {
+  if (!stages || stages.length === 0) {
+    alert('لم يتم تحميل المراحل بعد، يرجى الانتظار ثانية واحدة...');
     return;
   }
 
-  nextActionCallback = callback;
+  currentStageIndex = stageNumber - 1;
+  var stage = stages[currentStageIndex];
+  if (!stage) return;
 
-  if (isSuccess) {
-    card.classList.remove('wrong-border');
-    icon.innerText = '🎉';
-    t.innerText = getRandomPraise();
-    t.style.color = '#2E7D32';
-    d.innerText = desc;
-    btn.style.display = 'block';
-    btn.className = 'btn btn-primary';
-    btn.innerText = btnText || 'المرحلة التالية ⏩';
-    if (homeBtn) homeBtn.style.display = 'block';
-  } else {
-    card.classList.add('wrong-border');
-    icon.innerText = '❌';
-    t.innerText = title || 'إجابة غير صحيحة!';
-    t.style.color = '#C62828';
-    d.innerText = desc || 'فكر مجدداً في السؤال وحاول';
-    btn.style.display = 'block';
-    btn.className = 'btn';
-    btn.style.backgroundColor = '#E57373';
-    btn.style.color = '#FFF';
-    btn.innerText = btnText || 'إعادة المحاولة 🔄';
-    if (homeBtn) homeBtn.style.display = 'none';
-  }
-
-  modal.style.display = 'flex';
-}
-
-function handleResultDismiss() {
-  var modal = document.getElementById('result-modal');
-  if (modal) modal.style.display = 'none';
-  if (nextActionCallback) {
-    var cb = nextActionCallback;
-    nextActionCallback = null;
-    cb();
-  }
-}
-
-function handleResultGoHome() {
-  var modal = document.getElementById('result-modal');
-  if (modal) modal.style.display = 'none';
-  nextActionCallback = null;
-  showScreen('screen-home');
-}
-
-function startStage(stageNum) {
-  if (!stages || stages.length === 0) return;
-
-  var stage = stages.find(function(s) { return s.id === stageNum; }) || stages[0];
-  currentPlayingStage = stage.id;
-  userGuess = [];
+  var resModal = document.getElementById('result-modal');
+  if (resModal) resModal.style.display = 'none';
 
   var titleEl = document.getElementById('stage-title');
-  var qTextEl = document.getElementById('question-text');
   if (titleEl) titleEl.innerText = 'المرحلة ' + stage.id;
-  if (qTextEl) qTextEl.innerText = stage.question;
 
-  var typeBadge = document.getElementById('stage-badge-type');
+  var qText = document.getElementById('question-text');
+  if (qText) qText.innerText = stage.question;
+
+  var badgeEl = document.getElementById('stage-badge-type');
+  
   var lettersArea = document.getElementById('letters-mode-area');
-  var choiceArea = document.getElementById('choice-mode-area');
+  var choicesArea = document.getElementById('choice-mode-area');
   var tfArea = document.getElementById('tf-mode-area');
-  var hintBtn = document.getElementById('hint-letter-btn');
 
   if (lettersArea) lettersArea.style.display = 'none';
-  if (choiceArea) choiceArea.style.display = 'none';
+  if (choicesArea) choicesArea.style.display = 'none';
   if (tfArea) tfArea.style.display = 'none';
-  if (hintBtn) hintBtn.style.display = 'none';
-
-  if (stage.type === 'choices') {
-    if (typeBadge) typeBadge.innerText = 'اختر الإجابة الصحيحة';
-    if (choiceArea) choiceArea.style.display = 'flex';
-    renderChoices(stage.choices, stage.answer);
-  } else if (stage.type === 'tf' || stage.type === 'true_false') {
-    if (typeBadge) typeBadge.innerText = 'صح أم خطأ؟';
-    if (tfArea) tfArea.style.display = 'flex';
-  } else {
-    if (typeBadge) typeBadge.innerText = 'تجميع حروف';
-    if (lettersArea) lettersArea.style.display = 'block';
-    if (hintBtn) hintBtn.style.display = 'inline-block';
-    renderAnswerSlots(stage.answer.length);
-    renderKeyboard(stage.letters || stage.answer.split(''));
-  }
 
   showScreen('screen-game');
+
+  if (stage.type === 'choices') {
+    if (badgeEl) badgeEl.innerText = 'اختيار من متعدد';
+    setupChoicesMode(stage);
+  } else if (stage.type === 'tf') {
+    if (badgeEl) badgeEl.innerText = 'صح أم خطأ';
+    setupTFMode(stage);
+  } else {
+    if (badgeEl) badgeEl.innerText = 'تجميع حروف';
+    setupLettersMode(stage);
+  }
+}
+
+function setupTFMode(stage) {
+  var tfArea = document.getElementById('tf-mode-area');
+  if (tfArea) tfArea.style.display = 'flex';
 }
 
 function checkTrueFalseAnswer(userChoice) {
-  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
+  var stage = stages[currentStageIndex];
   if (!stage) return;
 
-  var correct = String(stage.answer).trim();
-  var reward = getCurrentStageReward();
-
-  if (userChoice === correct) {
-    showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
-      onStagePassed();
-    });
+  var cleanAnswer = String(stage.answer).trim();
+  if (userChoice === cleanAnswer) {
+    handleStageSuccess(stage.reward || 5);
   } else {
-    showGameAlert(false, 'إجابة غير صحيحة!', 'المعلومة ليست كذلك، فكر جيداً وحاول مجدداً', 'إعادة المحاولة 🔄');
+    handleStageFail();
   }
 }
 
-function renderChoices(choices, correctAnswer) {
-  var container = document.getElementById('choice-mode-area');
-  if (!container) return;
-  container.innerHTML = '';
+function setupChoicesMode(stage) {
+  var choicesArea = document.getElementById('choice-mode-area');
+  if (!choicesArea) return;
+  choicesArea.innerHTML = '';
+  choicesArea.style.display = 'flex';
 
-  var reward = getCurrentStageReward();
-
-  choices.forEach(function(opt) {
+  var choicesList = stage.choices || [];
+  choicesList.forEach(function(opt) {
     var btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerText = opt;
     btn.onclick = function() {
-      if (opt === correctAnswer) {
+      if (opt === String(stage.answer).trim()) {
         btn.classList.add('correct');
-        showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
-          onStagePassed();
-        });
+        setTimeout(function() {
+          handleStageSuccess(stage.reward || 5);
+        }, 300);
       } else {
         btn.classList.add('wrong');
-        showGameAlert(false, 'إجابة غير صحيحة!', 'فكر مجدداً في السؤال وحاول', 'إعادة المحاولة 🔄', function() {
-          btn.classList.remove('wrong');
-        });
+        setTimeout(function() {
+          handleStageFail();
+        }, 300);
       }
     };
-    container.appendChild(btn);
+    choicesArea.appendChild(btn);
   });
 }
 
-function renderAnswerSlots(count) {
-  var container = document.getElementById('answer-boxes');
-  if (!container) return;
-  container.innerHTML = '';
-  var row = document.createElement('div');
-  row.className = 'answer-row';
-  for (var i = 0; i < count; i++) {
-    var slot = document.createElement('div');
-    slot.className = 'char-slot';
-    row.appendChild(slot);
-  }
-  container.appendChild(row);
-}
+function setupLettersMode(stage) {
+  var lettersArea = document.getElementById('letters-mode-area');
+  if (lettersArea) lettersArea.style.display = 'block';
 
-function renderKeyboard(letters) {
-  var container = document.getElementById('letters-keyboard');
-  if (!container) return;
-  container.innerHTML = '';
-  var shuffled = letters.slice().sort(function() { return 0.5 - Math.random(); });
-  shuffled.forEach(function(char) {
-    var btn = document.createElement('button');
-    btn.className = 'key-btn';
-    btn.innerText = char;
-    btn.onclick = function() { selectLetter(char, btn); };
-    container.appendChild(btn);
-  });
-}
+  targetAnswer = String(stage.answer).replace(/[\s,،]/g, '');
+  currentInputLetters = [];
 
-function selectLetter(char, btn) {
-  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  if (!stage) return;
-
-  var targetAnswer = stage.answer;
-  var reward = getCurrentStageReward();
-
-  if (userGuess.length >= targetAnswer.length) return;
-
-  userGuess.push({ char: char, btn: btn });
-  btn.style.visibility = 'hidden';
-  updateSlots();
-
-  if (userGuess.length === targetAnswer.length) {
-    var word = userGuess.map(function(i) { return i.char; }).join('');
-    if (word === targetAnswer) {
-      showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
-        onStagePassed();
-      });
-    } else {
-      showGameAlert(false, 'الكلمة غير صحيحة', 'حاول ترتيب الحروف بالشكل السليم', 'إعادة المحاولة 🔄', function() {
-        resetGuess();
-      });
-    }
-  }
-}
-
-function updateSlots() {
-  var slots = document.querySelectorAll('.char-slot');
-  for (var i = 0; i < slots.length; i++) {
-    slots[i].innerText = userGuess[i] ? userGuess[i].char : '';
-  }
-}
-
-function resetGuess() {
-  userGuess.forEach(function(i) {
-    if (i.btn) i.btn.style.visibility = 'visible';
-  });
-  userGuess = [];
-  updateSlots();
-}
-
-function onStagePassed() {
-  var reward = getCurrentStageReward();
-
-  if (currentPlayingStage === playerData.maxStage) {
-    playerData.maxStage++;
-    playerData.coins += reward;
-    savePlayerData();
-    updateUI();
-    if (typeof renderMapNodes === 'function') renderMapNodes();
-
-    if (APPS_SCRIPT_URL) {
-      fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'sync_player',
-          email: playerData.email,
-          maxStage: playerData.maxStage,
-          coins: playerData.coins
-        })
-      }).catch(function() {});
+  var boxes = document.getElementById('answer-boxes');
+  if (boxes) {
+    boxes.innerHTML = '';
+    for (var i = 0; i < targetAnswer.length; i++) {
+      var slot = document.createElement('div');
+      slot.className = 'char-slot';
+      slot.id = 'slot-' + i;
+      slot.onclick = (function(idx) {
+        return function() { removeLetterAt(idx); };
+      })(i);
+      boxes.appendChild(slot);
     }
   }
 
-  if (currentPlayingStage < stages.length) {
-    startStage(currentPlayingStage + 1);
-  } else {
-    showGameAlert(true, 'تبارك الله!', 'ختمت جميع مراحل المسابقة بنجاح!', 'الخريطة 🗺️', function() {
-      showScreen('screen-map');
+  var keyboard = document.getElementById('letters-keyboard');
+  if (keyboard) {
+    keyboard.innerHTML = '';
+    var keys = stage.letters && stage.letters.length > 0 ? stage.letters : targetAnswer.split('');
+    keys.forEach(function(char, kIdx) {
+      var kBtn = document.createElement('button');
+      kBtn.className = 'key-btn';
+      kBtn.id = 'key-' + kIdx;
+      kBtn.innerText = char;
+      kBtn.onclick = function() {
+        appendLetter(char, kIdx);
+      };
+      keyboard.appendChild(kBtn);
     });
   }
 }
 
+function appendLetter(char, keyIndex) {
+  if (currentInputLetters.length >= targetAnswer.length) return;
+  currentInputLetters.push({ char: char, keyIndex: keyIndex });
+
+  var kBtn = document.getElementById('key-' + keyIndex);
+  if (kBtn) kBtn.style.visibility = 'hidden';
+
+  renderAnswerSlots();
+
+  if (currentInputLetters.length === targetAnswer.length) {
+    var userAns = currentInputLetters.map(function(item) { return item.char; }).join('');
+    if (userAns === targetAnswer) {
+      var stage = stages[currentStageIndex];
+      handleStageSuccess(stage ? (stage.reward || 5) : 5);
+    } else {
+      handleStageFail();
+    }
+  }
+}
+
+function removeLetterAt(index) {
+  if (index >= currentInputLetters.length) return;
+  var removed = currentInputLetters.splice(index, 1)[0];
+  if (removed && removed.keyIndex !== undefined) {
+    var kBtn = document.getElementById('key-' + removed.keyIndex);
+    if (kBtn) kBtn.style.visibility = 'visible';
+  }
+  renderAnswerSlots();
+}
+
+function renderAnswerSlots() {
+  for (var i = 0; i < targetAnswer.length; i++) {
+    var slot = document.getElementById('slot-' + i);
+    if (slot) {
+      slot.innerText = currentInputLetters[i] ? currentInputLetters[i].char : '';
+    }
+  }
+}
+
+function handleStageSuccess(reward) {
+  playerData.coins += reward;
+  if (currentStageIndex + 1 === playerData.maxStage) {
+    playerData.maxStage++;
+  }
+  savePlayerData();
+  updateUI();
+
+  var resModal = document.getElementById('result-modal');
+  var resCard = document.getElementById('result-card-box');
+  var resIcon = document.getElementById('result-icon');
+  var resTitle = document.getElementById('result-title');
+  var resDesc = document.getElementById('result-desc');
+  var resBtn = document.getElementById('result-btn');
+
+  if (resCard) resCard.classList.remove('wrong-border');
+  if (resIcon) resIcon.innerText = '🎉';
+  if (resTitle) resTitle.innerText = 'أحسنت! إجابة صحيحة';
+  if (resDesc) resDesc.innerText = '+' + reward + ' نقطة تمت إضافتها لرصيدك';
+  if (resBtn) resBtn.innerText = 'المرحلة التالية';
+
+  if (resModal) resModal.style.display = 'flex';
+}
+
+function handleStageFail() {
+  var resModal = document.getElementById('result-modal');
+  var resCard = document.getElementById('result-card-box');
+  var resIcon = document.getElementById('result-icon');
+  var resTitle = document.getElementById('result-title');
+  var resDesc = document.getElementById('result-desc');
+  var resBtn = document.getElementById('result-btn');
+
+  if (resCard) resCard.classList.add('wrong-border');
+  if (resIcon) resIcon.innerText = '❌';
+  if (resTitle) resTitle.innerText = 'إجابة غير صحيحة';
+  if (resDesc) resDesc.innerText = 'حاول مرة أخرى وركّز جيداً!';
+  if (resBtn) resBtn.innerText = 'إعادة المحاولة';
+
+  if (resModal) resModal.style.display = 'flex';
+}
+
+function handleResultDismiss() {
+  var resModal = document.getElementById('result-modal');
+  if (resModal) resModal.style.display = 'none';
+
+  var resTitle = document.getElementById('result-title');
+  if (resTitle && resTitle.innerText.indexOf('أحسنت') !== -1) {
+    if (currentStageIndex + 1 < stages.length) {
+      startStage(currentStageIndex + 2);
+    } else {
+      showScreen('screen-map');
+    }
+  } else {
+    startStage(currentStageIndex + 1);
+  }
+}
+
+function handleResultGoHome() {
+  var resModal = document.getElementById('result-modal');
+  if (resModal) resModal.style.display = 'none';
+  showScreen('screen-home');
+}
+
 function useHintRevealLetter() {
-  if (playerData.coins < 20) {
-    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 20 نقطة على الأقل لاستخدام التلميح', 'حسناً');
+  var stage = stages[currentStageIndex];
+  if (!stage || stage.type !== 'letters') {
+    alert('كشف الحروف متاح فقط في مراحل تجميع الكلمات!');
     return;
   }
-  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  if (!stage || stage.type === 'choices' || stage.type === 'tf' || stage.type === 'true_false') return;
+  if (playerData.coins < 20) {
+    alert('عذراً، لا تملك رصيداً كافياً (المطلوب 20 نقطة)');
+    return;
+  }
+  if (currentInputLetters.length >= targetAnswer.length) return;
 
-  var curLen = userGuess.length;
-  if (curLen < stage.answer.length) {
-    var correctChar = stage.answer[curLen];
-    playerData.coins -= 20;
-    savePlayerData();
-    updateUI();
+  playerData.coins -= 20;
+  savePlayerData();
+  updateUI();
 
-    var keyBtns = document.querySelectorAll('.key-btn');
-    for (var i = 0; i < keyBtns.length; i++) {
-      var btn = keyBtns[i];
-      if (btn.innerText === correctChar && btn.style.visibility !== 'hidden') {
-        selectLetter(correctChar, btn);
-        break;
-      }
+  var nextIdx = currentInputLetters.length;
+  var requiredChar = targetAnswer[nextIdx];
+
+  var keyboard = document.getElementById('letters-keyboard');
+  var buttons = keyboard ? keyboard.querySelectorAll('.key-btn') : [];
+  for (var b = 0; b < buttons.length; b++) {
+    if (buttons[b].innerText === requiredChar && buttons[b].style.visibility !== 'hidden') {
+      appendLetter(requiredChar, b);
+      break;
     }
   }
 }
 
 function useHintSkipStage() {
   if (playerData.coins < 50) {
-    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 50 نقطة لتخطي هذا السؤال', 'حسناً');
+    alert('عذراً، لا تملك رصيداً كافياً لتخطي المرحلة (المطلوب 50 نقطة)');
     return;
   }
   playerData.coins -= 50;
-  savePlayerData();
-  updateUI();
-  onStagePassed();
+  var stage = stages[currentStageIndex];
+  handleStageSuccess(stage ? (stage.reward || 5) : 5);
 }
