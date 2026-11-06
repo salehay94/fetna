@@ -2,7 +2,6 @@ var currentPlayingStage = 1;
 var userGuess = [];
 var nextActionCallback = null;
 
-// مصفوفة العبارات الإيمانية المتنوعة
 var praisePhrases = [
   'ما شاء الله!',
   'تبارك الرحمن!',
@@ -17,7 +16,6 @@ function getRandomPraise() {
   return praisePhrases[index];
 }
 
-// دالة جلب المكافأة المحددة للسؤال الحالي من الشيت
 function getCurrentStageReward() {
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage) return 15;
@@ -25,7 +23,6 @@ function getCurrentStageReward() {
   return (r && !isNaN(r)) ? Number(r) : 15;
 }
 
-// دالة نافذة النتيجة المحدثة
 function showGameAlert(isSuccess, title, desc, btnText, callback) {
   var modal = document.getElementById('result-modal');
   var card = document.getElementById('result-card-box');
@@ -86,7 +83,6 @@ function handleResultGoHome() {
   showScreen('screen-home');
 }
 
-// دالة بدء المرحلة والتحويل للواجهة المناسبة
 function startStage(stageNum) {
   if (!stages || stages.length === 0) return;
 
@@ -105,7 +101,6 @@ function startStage(stageNum) {
   var tfArea = document.getElementById('tf-mode-area');
   var hintBtn = document.getElementById('hint-letter-btn');
 
-  // إخفاء كل الواجهات لتهيئة الواجهة المطلوبة فقط
   if (lettersArea) lettersArea.style.display = 'none';
   if (choiceArea) choiceArea.style.display = 'none';
   if (tfArea) tfArea.style.display = 'none';
@@ -119,7 +114,6 @@ function startStage(stageNum) {
     if (typeBadge) typeBadge.innerText = 'صح أم خطأ؟';
     if (tfArea) tfArea.style.display = 'flex';
   } else {
-    // نمط الحروف الافتراضي
     if (typeBadge) typeBadge.innerText = 'تجميع حروف';
     if (lettersArea) lettersArea.style.display = 'block';
     if (hintBtn) hintBtn.style.display = 'inline-block';
@@ -130,9 +124,6 @@ function startStage(stageNum) {
   showScreen('screen-game');
 }
 
-/* =========================================
-   1. نمط صح أو خطأ (True / False)
-========================================= */
 function checkTrueFalseAnswer(userChoice) {
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage) return;
@@ -149,9 +140,6 @@ function checkTrueFalseAnswer(userChoice) {
   }
 }
 
-/* =========================================
-   2. نمط الاختيار من متعدد (4 خيارات)
-========================================= */
 function renderChoices(choices, correctAnswer) {
   var container = document.getElementById('choice-mode-area');
   if (!container) return;
@@ -180,9 +168,6 @@ function renderChoices(choices, correctAnswer) {
   });
 }
 
-/* =========================================
-   3. نمط تجميع الحروف التقليدي
-========================================= */
 function renderAnswerSlots(count) {
   var container = document.getElementById('answer-boxes');
   if (!container) return;
@@ -253,9 +238,6 @@ function resetGuess() {
   updateSlots();
 }
 
-/* =========================================
-   إنجاز المرحلة وتحديث الرصيد في جوجل شيت
-========================================= */
 function onStagePassed() {
   var reward = getCurrentStageReward();
 
@@ -289,9 +271,6 @@ function onStagePassed() {
   }
 }
 
-/* =========================================
-   وسائل المساعدة (تلميح وتخطي)
-========================================= */
 function useHintRevealLetter() {
   if (playerData.coins < 20) {
     showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 20 نقطة على الأقل لاستخدام التلميح', 'حسناً');
