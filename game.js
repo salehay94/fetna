@@ -1,12 +1,16 @@
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCZT8V6dwv8R5mWCj6n70p4omukxVsyWiYk0cw8CnPuSvvuDKRhfIvB1TKC1qocGMaMA/exec';
 
-// روابط القراءة المباشرة لكل تبويب باسمه العربي المشفر
-const URL_CHOICES = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('خيارات')}`;
-const URL_LETTERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('المراحل')}`;
-const URL_CROSS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('كلمات_متقاطعة')}`;
+// مراحل مدمجة جاهزة للعمل فوراً من اللحظة الأولى
+let stages = [
+  { id: 1, type: 'letters', question: "من هو أول الأنبياء عليهم السلام؟", answer: "آدم", letters: ["آ","د","م","س","و","ي","ن","ل"] },
+  { id: 2, type: 'letters', question: "أين ولد النبي محمد صلى الله عليه وسلم؟", answer: "مكة", letters: ["م","ك","ة","ق","د","س","ر","ح"] },
+  { id: 3, type: 'letters', question: "من هو خاتم الأنبياء والمرسلين؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي","ف"] },
+  { id: 4, type: 'choices', question: "كم عدد سور القرآن الكريم؟", answer: "114 سورة", choices: ["110 سورة", "112 سورة", "114 سورة", "120 سورة"] },
+  { id: 5, type: 'choices', question: "في أي عام هجري وقعت غزوة بدر الكبرى؟", answer: "2 هـ", choices: ["1 هـ", "2 هـ", "3 هـ", "5 هـ"] },
+  { id: 6, type: 'choices', question: "ما هي أقصر سورة في القرآن الكريم؟", answer: "الكوثر", choices: ["الفلق", "الإخلاص", "الكوثر", "النصر"] }
+];
 
-let stages = [];
 let currentPlayingStage = 1;
 let userGuess = [];
 
@@ -18,24 +22,43 @@ let playerData = {
   coins: 150
 };
 
-// 1. إدارة الحساب
-function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_registered_player_v8');
-  if (saved) {
-    try { playerData = JSON.parse(saved); } catch(e) {}
-    updateUI();
-    showScreen('screen-home');
-  } else {
-    showScreen('screen-auth');
+// 1. إدارة ظهور الشاشات
+function showScreen(screenId) {
+  const screens = document.querySelectorAll('.screen');
+  screens.forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(screenId);
+  if (target) {
+    target.classList.add('active');
   }
 }
 
-function handleAuthLogin() {
-  const name = document.getElementById('auth-name').value.trim();
-  const email = document.getElementById('auth-email').value.trim();
-  const pass = document.getElementById('auth-pass').value.trim();
+// 2. فحص الحساب وبدء العرض فوراً
+function checkExistingUser() {
+  const saved = localStorage.getItem('fetnah_registered_player_v9');
+  if (saved) {
+    try { 
+      playerData = JSON.parse(saved); 
+    } catch(e) {}
+  }
+  updateUI();
+  renderMapNodes();
+  // إظهار الشاشة الرئيسية مباشرة لتفادي أي شاشة بيضاء
+  showScreen('screen-home');
+}
 
-  if (!name || !email) return alert("يرجى إدخال اسم اللاعب والبريد الإلكتروني للمتابعة!");
+function handleAuthLogin() {
+  const nameInput = document.getElementById('auth-name');
+  const emailInput = document.getElementById('auth-email');
+  const passInput = document.getElementById('auth-pass');
+
+  const name = nameInput ? nameInput.value.trim() : '';
+  const email = emailInput ? emailInput.value.trim() : '';
+  const pass = passInput ? passInput.value.trim() : '';
+
+  if (!name || !email) {
+    alert("يرجى إدخال اسم اللاعب والبريد الإلكتروني للمتابعة!");
+    return;
+  }
 
   playerData.name = name;
   playerData.email = email;
@@ -43,146 +66,41 @@ function handleAuthLogin() {
 
   savePlayerData();
   updateUI();
+  renderMapNodes();
   showScreen('screen-home');
 
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({
-      action: 'sync_player',
-      name: playerData.name,
-      email: playerData.email,
-      password: playerData.password,
-      maxStage: playerData.maxStage,
-      coins: playerData.coins
-    })
-  }).catch(err => console.log("تعذر المزامنة:", err));
+  // مزامنة صامتة في الخلفية
+  if (APPS_SCRIPT_URL) {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({
+        action: 'sync_player',
+        name: playerData.name,
+        email: playerData.email,
+        password: playerData.password,
+        maxStage: playerData.maxStage,
+        coins: playerData.coins
+      })
+    }).catch(err => console.log("تعذر المزامنة الحية:", err));
+  }
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_registered_player_v8', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_registered_player_v9', JSON.stringify(playerData));
 }
 
 function updateUI() {
   const nameEl = document.getElementById('display-player-name');
   if (nameEl) nameEl.innerText = playerData.name || 'اللاعب';
+
   ['home-coins', 'map-coins', 'game-coins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerText = playerData.coins;
   });
 }
 
-// 2. دالة مساعدة لقراءة أي تبويب بأمان
-async function fetchSheetRows(url) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47).slice(0, -2));
-    return json.table.rows || [];
-  } catch(e) {
-    return [];
-  }
-}
-
-// 3. قراءة كل التبويبات ودمجها في قائمة مراحل متسلسلة
-async function loadStagesFromSheet() {
-  try {
-    let combinedStages = [];
-    let stageCounter = 1;
-
-    // أولاً: قراءة أسئلة تجميع الحروف من تبويب "المراحل"
-    const rowsLetters = await fetchSheetRows(URL_LETTERS);
-    rowsLetters.forEach(r => {
-      const c = r.c;
-      if (c && c[0] && !isNaN(c[0].v)) {
-        const qText = c[1] ? String(c[1].v).trim() : (c[2] ? String(c[2].v).trim() : '');
-        const ans = c[2] && isNaN(c[2].v) ? String(c[2].v).trim() : (c[3] ? String(c[3].v).trim() : '');
-        const rawLetters = c[3] && String(c[3].v).includes(',') ? String(c[3].v) : (c[4] ? String(c[4].v) : '');
-        const letters = rawLetters ? rawLetters.split(',').map(s => s.trim()) : ans.split('');
-
-        if (qText && ans) {
-          combinedStages.push({
-            id: stageCounter++,
-            type: 'letters',
-            question: qText,
-            answer: ans,
-            letters: letters
-          });
-        }
-      }
-    });
-
-    // ثانياً: قراءة أسئلة الخيارات من تبويب "خيارات"
-    const rowsChoices = await fetchSheetRows(URL_CHOICES);
-    rowsChoices.forEach(r => {
-      const c = r.c;
-      if (c && c[0] && !isNaN(c[0].v)) {
-        const qText = c[1] ? String(c[1].v).trim() : '';
-        const opt1 = c[2] ? String(c[2].v).trim() : '';
-        const opt2 = c[3] ? String(c[3].v).trim() : '';
-        const opt3 = c[4] ? String(c[4].v).trim() : '';
-        const opt4 = c[5] ? String(c[5].v).trim() : '';
-        const ans = c[6] ? String(c[6].v).trim() : '';
-
-        if (qText && ans) {
-          combinedStages.push({
-            id: stageCounter++,
-            type: 'choices',
-            question: qText,
-            answer: ans,
-            choices: [opt1, opt2, opt3, opt4].filter(Boolean)
-          });
-        }
-      }
-    });
-
-    // ثالثاً: قراءة الكلمات المتقاطعة من تبويب "كلمات_متقاطعة"
-    const rowsCross = await fetchSheetRows(URL_CROSS);
-    let crossGroups = {};
-    rowsCross.forEach(r => {
-      const c = r.c;
-      if (c && c[0] && !isNaN(c[0].v)) {
-        const stNum = parseInt(c[0].v);
-        const dir = c[1] ? String(c[1].v).trim() : 'أفقي';
-        const qText = c[2] ? String(c[2].v).trim() : '';
-        const ans = c[3] ? String(c[3].v).trim() : '';
-        if (!crossGroups[stNum]) crossGroups[stNum] = [];
-        crossGroups[stNum].push({ dir, qText, ans });
-      }
-    });
-
-    Object.keys(crossGroups).forEach(k => {
-      const group = crossGroups[k];
-      if (group.length >= 2) {
-        combinedStages.push({
-          id: stageCounter++,
-          type: 'letters',
-          question: `كلمات متقاطعة:\n1- أفقي: ${group[0].qText}\n2- عمودي: ${group[1].qText}`,
-          answer: group[0].ans,
-          letters: (group[0].ans + group[1].ans).split('')
-        });
-      }
-    });
-
-    if (combinedStages.length > 0) {
-      stages = combinedStages;
-    } else {
-      // احتياطي فوري إذا تأخر الاتصال
-      stages = [
-        { id: 1, type: 'letters', question: "من هو خاتم الأنبياء؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي"] },
-        { id: 2, type: 'choices', question: "كم عدد سور القرآن الكريم؟", answer: "114 سورة", choices: ["110 سورة", "112 سورة", "114 سورة", "120 سورة"] }
-      ];
-    }
-
-    renderMapNodes();
-  } catch(e) {
-    console.error("خطأ قراءة الشيت:", e);
-    renderMapNodes();
-  }
-}
-
-// 4. خريطة المراحل
+// 3. خريطة المراحل
 function renderMapNodes() {
   const container = document.getElementById('map-container');
   if (!container) return;
@@ -210,24 +128,21 @@ function renderMapNodes() {
 }
 
 function continueCurrentStage() {
-  if (!stages || stages.length === 0) {
-    alert("جاري تحميل الأسئلة من الشيت... انتظر ثانية ثم أعد المحاولة.");
-    return;
-  }
-  let target = playerData.maxStage;
+  let target = playerData.maxStage || 1;
   if (target > stages.length) target = stages.length;
   startStage(target);
 }
 
+// 4. بدء تشغيل مرحلة
 function startStage(stageNum) {
-  if (!stages || stages.length === 0) return alert("المراحل قيد التحميل...");
-  
-  let stage = stages.find(s => s.id === stageNum) || stages[stages.length - 1];
+  let stage = stages.find(s => s.id === stageNum) || stages[0];
   currentPlayingStage = stage.id;
   userGuess = [];
 
-  document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
-  document.getElementById('question-text').innerText = stage.question;
+  const titleEl = document.getElementById('stage-title');
+  const qTextEl = document.getElementById('question-text');
+  if (titleEl) titleEl.innerText = `المرحلة ${stage.id}`;
+  if (qTextEl) qTextEl.innerText = stage.question;
   
   const typeBadge = document.getElementById('stage-badge-type');
   const lettersArea = document.getElementById('letters-mode-area');
@@ -235,16 +150,16 @@ function startStage(stageNum) {
   const hintBtn = document.getElementById('hint-letter-btn');
 
   if (stage.type === 'choices') {
-    typeBadge.innerText = 'اختر الإجابة الصحيحة';
-    lettersArea.style.display = 'none';
-    choiceArea.style.display = 'flex';
-    hintBtn.style.display = 'none';
+    if (typeBadge) typeBadge.innerText = 'اختر الإجابة الصحيحة';
+    if (lettersArea) lettersArea.style.display = 'none';
+    if (choiceArea) choiceArea.style.display = 'flex';
+    if (hintBtn) hintBtn.style.display = 'none';
     renderChoices(stage.choices, stage.answer);
   } else {
-    typeBadge.innerText = 'تجميع حروف';
-    lettersArea.style.display = 'block';
-    choiceArea.style.display = 'none';
-    hintBtn.style.display = 'inline-block';
+    if (typeBadge) typeBadge.innerText = 'تجميع حروف';
+    if (lettersArea) lettersArea.style.display = 'block';
+    if (choiceArea) choiceArea.style.display = 'none';
+    if (hintBtn) hintBtn.style.display = 'inline-block';
     renderAnswerSlots(stage.answer.length);
     renderKeyboard(stage.letters);
   }
@@ -254,7 +169,9 @@ function startStage(stageNum) {
 
 function renderChoices(choices, correctAnswer) {
   const container = document.getElementById('choice-mode-area');
+  if (!container) return;
   container.innerHTML = '';
+
   choices.forEach(opt => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
@@ -262,10 +179,16 @@ function renderChoices(choices, correctAnswer) {
     btn.onclick = () => {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        setTimeout(() => { alert("أحسنت! إجابة صحيحة 🎉"); onStagePassed(); }, 200);
+        setTimeout(() => { 
+          alert("أحسنت! إجابة صحيحة 🎉"); 
+          onStagePassed(); 
+        }, 200);
       } else {
         btn.classList.add('wrong');
-        setTimeout(() => { alert("إجابة غير صحيحة، حاول مجدداً!"); btn.classList.remove('wrong'); }, 200);
+        setTimeout(() => { 
+          alert("إجابة غير صحيحة، حاول مجدداً!"); 
+          btn.classList.remove('wrong'); 
+        }, 200);
       }
     };
     container.appendChild(btn);
@@ -274,6 +197,7 @@ function renderChoices(choices, correctAnswer) {
 
 function renderAnswerSlots(count) {
   const container = document.getElementById('answer-boxes');
+  if (!container) return;
   container.innerHTML = '';
   for (let i = 0; i < count; i++) {
     const slot = document.createElement('div');
@@ -284,6 +208,7 @@ function renderAnswerSlots(count) {
 
 function renderKeyboard(letters) {
   const container = document.getElementById('letters-keyboard');
+  if (!container) return;
   container.innerHTML = '';
   const shuffled = [...letters].sort(() => 0.5 - Math.random());
   shuffled.forEach(char => {
@@ -297,7 +222,7 @@ function renderKeyboard(letters) {
 
 function selectLetter(char, btn) {
   const stage = stages.find(s => s.id === currentPlayingStage);
-  if (userGuess.length >= stage.answer.length) return;
+  if (!stage || userGuess.length >= stage.answer.length) return;
 
   userGuess.push({ char, btn });
   btn.style.visibility = 'hidden';
@@ -306,9 +231,15 @@ function selectLetter(char, btn) {
   if (userGuess.length === stage.answer.length) {
     const word = userGuess.map(i => i.char).join('');
     if (word === stage.answer) {
-      setTimeout(() => { alert("أحسنت! إجابة صحيحة 🎉"); onStagePassed(); }, 200);
+      setTimeout(() => { 
+        alert("أحسنت! إجابة صحيحة 🎉"); 
+        onStagePassed(); 
+      }, 200);
     } else {
-      setTimeout(() => { alert("إجابة غير صحيحة!"); resetGuess(); }, 200);
+      setTimeout(() => { 
+        alert("إجابة غير صحيحة!"); 
+        resetGuess(); 
+      }, 200);
     }
   }
 }
@@ -321,16 +252,18 @@ function onStagePassed() {
     updateUI();
     renderMapNodes();
 
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify({
-        action: 'sync_player',
-        email: playerData.email,
-        maxStage: playerData.maxStage,
-        coins: playerData.coins
-      })
-    });
+    if (APPS_SCRIPT_URL) {
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          action: 'sync_player',
+          email: playerData.email,
+          maxStage: playerData.maxStage,
+          coins: playerData.coins
+        })
+      }).catch(() => {});
+    }
   }
 
   if (currentPlayingStage < stages.length) {
@@ -343,7 +276,9 @@ function onStagePassed() {
 
 function updateSlots() {
   const slots = document.querySelectorAll('.char-slot');
-  slots.forEach((s, i) => { s.innerText = userGuess[i] ? userGuess[i].char : ''; });
+  slots.forEach((s, i) => { 
+    s.innerText = userGuess[i] ? userGuess[i].char : ''; 
+  });
 }
 
 function resetGuess() {
@@ -355,7 +290,7 @@ function resetGuess() {
 function useHintRevealLetter() {
   if (playerData.coins < 20) return alert("تحتاج 20 🪙 على الأقل!");
   const stage = stages.find(s => s.id === currentPlayingStage);
-  if (stage.type !== 'letters') return;
+  if (!stage || stage.type !== 'letters') return;
 
   const curLen = userGuess.length;
   if (curLen < stage.answer.length) {
@@ -384,12 +319,18 @@ function useHintSkipStage() {
   }
 }
 
-// استعادة كلمة المرور
-function openForgotPassModal() { document.getElementById('forgot-modal').style.display = 'flex'; }
+// 5. النوافذ واستعادة كلمة المرور
+function openForgotPassModal() { 
+  const m = document.getElementById('forgot-modal');
+  if (m) m.style.display = 'flex'; 
+}
+
 function submitPasswordReset() {
-  const email = document.getElementById('reset-email-input').value.trim();
+  const emailInput = document.getElementById('reset-email-input');
+  const email = emailInput ? emailInput.value.trim() : '';
   if (!email) return alert("يرجى كتابة بريدك المسجل!");
-  alert("جاري التحقق وإرسال كلمة السر...");
+  
+  alert("جاري التحقق وإرسال كلمة السر إلى بريدك...");
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
@@ -397,20 +338,29 @@ function submitPasswordReset() {
   }).then(() => {
     alert("إذا كان بريدك مسجلاً، ستصلك كلمة مرور جديدة فوراً!");
     closeModal('forgot-modal');
+  }).catch(() => {
+    alert("تعذر الاتصال بالخادم.");
   });
 }
 
-function openProfileModal() { document.getElementById('profile-modal').style.display = 'flex'; }
+function openProfileModal() { 
+  const m = document.getElementById('profile-modal');
+  if (m) m.style.display = 'flex'; 
+}
+
 function submitChangePassword() {
-  const newPass = document.getElementById('new-password-input').value.trim();
+  const passInput = document.getElementById('new-password-input');
+  const newPass = passInput ? passInput.value.trim() : '';
   if (!newPass) return alert("اكتب كلمة المرور الجديدة!");
+  
   playerData.password = newPass;
   savePlayerData();
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
-  });
+  }).catch(() => {});
+  
   alert("تم تحديث كلمة المرور!");
   closeModal('profile-modal');
 }
@@ -421,19 +371,57 @@ function linkGoogleAccount() {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_registered_player_v8');
+  localStorage.removeItem('fetnah_registered_player_v9');
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
 
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(id);
-  if (target) target.classList.add('active');
+function closeModal(id) { 
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none'; 
 }
 
-window.onload = () => {
+// 6. جلب بيانات الشيت في الخلفية بمرونة دون إيقاف اللعبة
+async function loadStagesSilently() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const text = await res.text();
+    const json = JSON.parse(text.substring(47).slice(0, -2));
+    const rows = json.table.rows;
+
+    let dynamicStages = [];
+    rows.forEach(r => {
+      const c = r.c;
+      if (c && c[0] && !isNaN(c[0].v)) {
+        const id = parseInt(c[0].v);
+        const type = c[1] ? String(c[1].v).trim() : 'تجميع حروف';
+        const qText = c[2] ? String(c[2].v).trim() : '';
+        const ans = c[3] ? String(c[3].v).trim() : '';
+        const rawAux = c[4] ? String(c[4].v).trim() : '';
+
+        if (type.includes('خيار') || type.includes('خيارات')) {
+          const choices = rawAux.split(',').map(s => s.trim());
+          dynamicStages.push({ id, type: 'choices', question: qText, answer: ans, choices });
+        } else if (qText && ans) {
+          const letters = rawAux.includes(',') ? rawAux.split(',').map(s => s.trim()) : ans.split('');
+          dynamicStages.push({ id, type: 'letters', question: qText, answer: ans, letters });
+        }
+      }
+    });
+
+    if (dynamicStages.length > 0) {
+      stages = dynamicStages;
+      renderMapNodes();
+    }
+  } catch(e) {
+    console.log("استمرار العمل بالمراحل المدمجة:", e);
+  }
+}
+
+// نقطة الانطلاق الفورية
+window.addEventListener('DOMContentLoaded', () => {
   checkExistingUser();
-  loadStagesFromSheet();
-};
+  loadStagesSilently();
+});
