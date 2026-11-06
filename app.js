@@ -2,8 +2,7 @@ var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBRgQ50Yym4IH3NF
 
 var playerData = {
   name: '',
-  email: '',
-  password: '',
+  phone: '',
   maxStage: 1,
   coins: 100
 };
@@ -19,21 +18,17 @@ function showScreen(screenId) {
   }
 }
 
+// فحص الجلسة السابقة عند فتح المتصفح
 function checkExistingUser() {
-  // تصفير الجلسات القديمة العالقة لمرة واحدة حتى يبدأ المستخدم بعدد المراحل الجديد
-  if (localStorage.getItem('fetnah_v700_flush') !== 'yes') {
-    localStorage.removeItem('fetnah_user_session_v6');
-    localStorage.setItem('fetnah_v700_flush', 'yes');
-  }
-
-  var saved = localStorage.getItem('fetnah_user_session_v6');
+  var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
     try {
       playerData = JSON.parse(saved);
-      if (playerData && playerData.email) {
+      if (playerData && playerData.phone) {
         updateUI();
         showScreen('screen-home');
-        syncCoinsFromSheet(playerData.email);
+        // مزامنة فورية لجلب أي تعديل يدوي قمت به في الشيت
+        syncPlayerData(playerData.phone);
         return;
       }
     } catch (e) {}
@@ -41,80 +36,102 @@ function checkExistingUser() {
   showScreen('screen-auth');
 }
 
-function syncCoinsFromSheet(email) {
-  if (!APPS_SCRIPT_URL || !email) return;
-  fetch(APPS_SCRIPT_URL + '?action=get_player&email=' + encodeURIComponent(email))
+// مزامنة المرحلة والرصيد مع Google Sheets
+function syncPlayerData(phone) {
+  if (!APPS_SCRIPT_URL || !phone) return;
+  fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(phone))
     .then(function(res) {
       if (!res.ok) throw new Error('Network error');
       return res.json();
     })
     .then(function(resData) {
       if (resData && resData.status === 'success') {
-        playerData.coins = Number(resData.coins);
-        if (resData.maxStage) playerData.maxStage = Number(resData.maxStage);
+        playerData.maxStage = Number(resData.maxStage) || 1;
+        playerData.coins = Number(resData.coins) || 100;
+        if (resData.name) playerData.name = resData.name;
         savePlayerData();
         updateUI();
         if (typeof renderMapNodes === 'function') renderMapNodes();
       }
     })
     .catch(function(err) {
-      console.log('تعذر مزامنة بيانات اللاعب حالياً:', err);
+      console.log('مزامنة الشيت:', err);
     });
 }
 
+// تسجيل الدخول بالاسم ورقم الهاتف فقط دون كلمة مرور
 function handleAuthLogin() {
   var nameInput = document.getElementById('auth-name');
-  var emailInput = document.getElementById('auth-email');
-  var passInput = document.getElementById('auth-pass');
+  var phoneInput = document.getElementById('auth-phone');
 
   var name = nameInput ? nameInput.value.trim() : '';
-  var email = emailInput ? emailInput.value.trim() : '';
-  var pass = passInput ? passInput.value.trim() : '';
+  var phone = phoneInput ? phoneInput.value.trim() : '';
 
-  if (!name || !email) {
-    alert('يرجى إدخال اسمك وبريدك الإلكتروني للمتابعة!');
+  if (!name || !phone) {
+    alert('يرجى إدخال اسمك ورقم هاتفك للمتابعة!');
     return;
   }
 
   playerData.name = name;
-  playerData.email = email;
-  playerData.password = pass || '123456';
-  playerData.maxStage = 1;
-  playerData.coins = 100;
+  playerData.phone = phone;
 
-  savePlayerData();
-  updateUI();
-  if (typeof renderMapNodes === 'function') renderMapNodes();
-  showScreen('screen-home');
-
-  if (APPS_SCRIPT_URL) {
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify({
-        action: 'sync_player',
-        name: playerData.name,
-        email: playerData.email,
-        password: playerData.password,
-        maxStage: playerData.maxStage,
-        coins: playerData.coins
-      })
-    }).catch(function() {});
-  }
+  // فحص هل الرقم مسجل سابقاً في الشيت ليجلب مرحلته ورصيده
+  fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(phone))
+    .then(function(res) { return res.json(); })
+    .then(function(resData) {
+      if (resData && resData.status === 'success') {
+        playerData.maxStage = Number(resData.maxStage) || 1;
+        playerData.coins = Number(resData.coins) || 100;
+      } else {
+        // لاعب جديد تماماً يبدأ من المرحلة 1 وبرصيد 100 نقطة
+        playerData.maxStage = 1;
+        playerData.coins = 100;
+        pushPlayerDataToSheet();
+      }
+      savePlayerData();
+      updateUI();
+      if (typeof renderMapNodes === 'function') renderMapNodes();
+      showScreen('screen-home');
+    })
+    .catch(function() {
+      // في حال حدوث خطأ اتصال بالإنترنت
+      playerData.maxStage = 1;
+      playerData.coins = 100;
+      savePlayerData();
+      updateUI();
+      showScreen('screen-home');
+    });
 }
 
+// حفظ البيانات في ذاكرة المتصفح
 function savePlayerData() {
-  localStorage.setItem('fetnah_user_session_v6', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_user_phone_session', JSON.stringify(playerData));
+}
+
+// إرسال التحديث إلى Google Sheets تلقائياً
+function pushPlayerDataToSheet() {
+  if (!APPS_SCRIPT_URL || !playerData.phone) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: playerData.name,
+      phone: playerData.phone,
+      maxStage: playerData.maxStage,
+      coins: playerData.coins
+    })
+  }).catch(function() {});
 }
 
 function updateUI() {
   var nameEl = document.getElementById('display-player-name');
-  if (nameEl) nameEl.innerText = playerData.name || 'لاعب جديد';
+  if (nameEl) nameEl.innerText = playerData.name || 'لاعب';
 
   var modalName = document.getElementById('modal-player-name');
-  var modalEmail = document.getElementById('modal-player-email');
-  if (modalName) modalName.innerText = playerData.name || 'لاعب جديد';
-  if (modalEmail) modalEmail.innerText = playerData.email || '-';
+  var modalPhone = document.getElementById('modal-player-phone');
+  if (modalName) modalName.innerText = playerData.name || 'لاعب';
+  if (modalPhone) modalPhone.innerText = playerData.phone || '-';
 
   var coinIds = ['home-coins', 'map-coins', 'game-coins'];
   for (var i = 0; i < coinIds.length; i++) {
@@ -125,12 +142,12 @@ function updateUI() {
 
 function continueCurrentStage() {
   if (typeof stages === 'undefined' || stages.length === 0) {
-    alert('جاري تجهيز المراحل... يرجى الانتظار لحظة.');
+    alert('جاري تجهيز المراحل... يرجى الانتظار ثانية واحدة.');
     return;
   }
   var target = playerData.maxStage || 1;
   if (target > stages.length) target = stages.length;
-  startStage(target);
+  if (typeof startStage === 'function') startStage(target);
 }
 
 function openModal(id) {
@@ -144,8 +161,8 @@ function closeModal(id) {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_user_session_v6');
-  playerData = { name: '', email: '', password: '', maxStage: 1, coins: 100 };
+  localStorage.removeItem('fetnah_user_phone_session');
+  playerData = { name: '', phone: '', maxStage: 1, coins: 100 };
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
