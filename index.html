@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=105">
+  <link rel="stylesheet" href="style.css?v=110">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -29,7 +29,7 @@
     <section id="screen-home" class="screen home-bg">
       <div class="top-player-bar">
         <div class="player-pill" onclick="openModal('profile-modal')">👤 <span id="display-player-name">اللاعب</span> ⚙️</div>
-        <div class="stat-badge">🪙 <span id="home-coins">100</span></div>
+        <div class="stat-badge"><span id="home-coins">100</span> نقطة</div>
       </div>
 
       <div class="overlay-content">
@@ -45,7 +45,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
         <h2>خريطة المراحل</h2>
-        <div class="stat-badge">🪙 <span id="map-coins">100</span></div>
+        <div class="stat-badge"><span id="map-coins">100</span> نقطة</div>
       </header>
       <div class="map-path" id="map-container"></div>
     </section>
@@ -55,12 +55,12 @@
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
-        <div class="stat-badge">🪙 <span id="game-coins">100</span></div>
+        <div class="stat-badge"><span id="game-coins">100</span> نقطة</div>
       </header>
 
       <div class="helpers-bar">
-        <button id="hint-letter-btn" class="help-btn" onclick="useHintRevealLetter()">💡 تلميح (20 🪙)</button>
-        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 🪙)</button>
+        <button id="hint-letter-btn" class="help-btn" onclick="useHintRevealLetter()">💡 كشف حرف (20 نقطة)</button>
+        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 نقطة)</button>
       </div>
 
       <div class="question-card">
@@ -108,11 +108,11 @@
 
   </div>
 
-  <!-- استدعاء الملفات البرمجية مع كسر الكاش لضمان التحديث الفوري -->
-  <script src="app.js?v=105"></script>
-  <script src="stages_data.js?v=105"></script>
-  <script src="map.js?v=105"></script>
-  <script src="quiz.js?v=105"></script>
+  <!-- استدعاء الملفات مع كسر الكاش لضمان التحديث الفوري -->
+  <script src="app.js?v=110"></script>
+  <script src="stages_data.js?v=110"></script>
+  <script src="map.js?v=110"></script>
+  <script src="quiz.js?v=110"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
