@@ -1,3 +1,5 @@
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxliYIEMFsp2XWRGVzsv3b_fvW3j-uBok0STJzVGZ8b6t6lrCvthcwtt-d4tQ-qb9SCVw/exec';
+
 var playerData = {
   name: '',
   email: '',
@@ -18,19 +20,41 @@ function showScreen(screenId) {
 }
 
 function checkExistingUser() {
-  var saved = localStorage.getItem('fetnah_user_session_v3');
+  var saved = localStorage.getItem('fetnah_user_session_v5');
   if (saved) {
     try {
       playerData = JSON.parse(saved);
-      if (playerData && playerData.name) {
+      if (playerData && playerData.email) {
         updateUI();
         showScreen('screen-home');
+        // جلب أحدث نقاط تم تعديلها في شيت الإكسل
+        syncCoinsFromSheet(playerData.email);
         return;
       }
     } catch (e) {}
   }
-  // إذا كان لاعباً جديداً يفتح له صفحة التسجيل
   showScreen('screen-auth');
+}
+
+// دالة فحص وجلب الرصيد من جدول جوجل شيت فور فتح اللعبة
+async function syncCoinsFromSheet(email) {
+  if (!APPS_SCRIPT_URL || !email) return;
+  try {
+    var response = await fetch(APPS_SCRIPT_URL + '?action=get_player&email=' + encodeURIComponent(email));
+    if (response.ok) {
+      var resData = await response.json();
+      if (resData && resData.status === 'success') {
+        playerData.coins = Number(resData.coins);
+        if (resData.maxStage) playerData.maxStage = Number(resData.maxStage);
+        savePlayerData();
+        updateUI();
+        if (typeof renderMapNodes === 'function') renderMapNodes();
+        console.log('تم تحديث الرصيد من الإكسل بنجاح: ' + playerData.coins);
+      }
+    }
+  } catch (err) {
+    console.log('تعذر مزامنة الرصيد حالياً:', err);
+  }
 }
 
 function handleAuthLogin() {
@@ -43,7 +67,7 @@ function handleAuthLogin() {
   var pass = passInput ? passInput.value.trim() : '';
 
   if (!name || !email) {
-    alert('يرجى كتابة الاسم والبريد للمتابعة!');
+    alert('يرجى إدخال اسمك وبريدك الإلكتروني للمتابعة!');
     return;
   }
 
@@ -58,7 +82,7 @@ function handleAuthLogin() {
   if (typeof renderMapNodes === 'function') renderMapNodes();
   showScreen('screen-home');
 
-  if (typeof APPS_SCRIPT_URL !== 'undefined' && APPS_SCRIPT_URL) {
+  if (APPS_SCRIPT_URL) {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -75,7 +99,7 @@ function handleAuthLogin() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_user_session_v3', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_user_session_v5', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -115,7 +139,7 @@ function closeModal(id) {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_user_session_v3');
+  localStorage.removeItem('fetnah_user_session_v5');
   playerData = { name: '', email: '', password: '', maxStage: 1, coins: 100 };
   closeModal('profile-modal');
   showScreen('screen-auth');
