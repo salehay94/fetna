@@ -45,7 +45,6 @@ function startStage(stageNumber) {
   }
 }
 
-// 1. نمط صح أو خطأ
 function setupTFMode(stage) {
   var tfArea = document.getElementById('tf-mode-area');
   if (tfArea) tfArea.style.display = 'flex';
@@ -63,7 +62,6 @@ function checkTrueFalseAnswer(userChoice) {
   }
 }
 
-// 2. نمط الاختيار من متعدد
 function setupChoicesMode(stage) {
   var choicesArea = document.getElementById('choice-mode-area');
   if (!choicesArea) return;
@@ -92,7 +90,6 @@ function setupChoicesMode(stage) {
   });
 }
 
-// 3. نمط تجميع الحروف
 function setupLettersMode(stage) {
   var lettersArea = document.getElementById('letters-mode-area');
   if (lettersArea) lettersArea.style.display = 'block';
@@ -170,7 +167,6 @@ function renderAnswerSlots() {
   }
 }
 
-// دالة الفوز وإرسال التحديث الفوري إلى Google Sheets
 function handleStageSuccess(reward) {
   playerData.coins += reward;
   if (currentStageIndex + 1 === playerData.maxStage) {
@@ -226,7 +222,7 @@ function handleResultDismiss() {
     if (currentStageIndex + 1 < stages.length) {
       startStage(currentStageIndex + 2);
     } else {
-      showScreen('screen-map');
+      openMapScreen();
     }
   } else {
     startStage(currentStageIndex + 1);
@@ -239,7 +235,6 @@ function handleResultGoHome() {
   showScreen('screen-home');
 }
 
-// وسائل المساعدة
 function useHintRevealLetter() {
   var stage = stages[currentStageIndex];
   if (!stage || stage.type !== 'letters') {
