@@ -18,7 +18,7 @@ function showScreen(screenId) {
   }
 }
 
-// فحص الجلسة السابقة عند فتح المتصفح
+// فحص الجلسة عند فتح اللعبة
 function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
@@ -27,7 +27,6 @@ function checkExistingUser() {
       if (playerData && playerData.phone) {
         updateUI();
         showScreen('screen-home');
-        // مزامنة فورية لجلب أي تعديل يدوي قمت به في الشيت
         syncPlayerData(playerData.phone);
         return;
       }
@@ -59,7 +58,7 @@ function syncPlayerData(phone) {
     });
 }
 
-// تسجيل الدخول بالاسم ورقم الهاتف فقط دون كلمة مرور
+// تسجيل الدخول بالاسم ورقم الهاتف فقط
 function handleAuthLogin() {
   var nameInput = document.getElementById('auth-name');
   var phoneInput = document.getElementById('auth-phone');
@@ -75,7 +74,7 @@ function handleAuthLogin() {
   playerData.name = name;
   playerData.phone = phone;
 
-  // فحص هل الرقم مسجل سابقاً في الشيت ليجلب مرحلته ورصيده
+  // جلب تقدم اللاعب برقم هاتفه مباشرة من الشيت
   fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(phone))
     .then(function(res) { return res.json(); })
     .then(function(resData) {
@@ -83,7 +82,7 @@ function handleAuthLogin() {
         playerData.maxStage = Number(resData.maxStage) || 1;
         playerData.coins = Number(resData.coins) || 100;
       } else {
-        // لاعب جديد تماماً يبدأ من المرحلة 1 وبرصيد 100 نقطة
+        // لاعب جديد يبدأ من المرحلة 1 برصيد 100
         playerData.maxStage = 1;
         playerData.coins = 100;
         pushPlayerDataToSheet();
@@ -94,33 +93,32 @@ function handleAuthLogin() {
       showScreen('screen-home');
     })
     .catch(function() {
-      // في حال حدوث خطأ اتصال بالإنترنت
-      playerData.maxStage = 1;
-      playerData.coins = 100;
       savePlayerData();
       updateUI();
       showScreen('screen-home');
     });
 }
 
-// حفظ البيانات في ذاكرة المتصفح
 function savePlayerData() {
   localStorage.setItem('fetnah_user_phone_session', JSON.stringify(playerData));
 }
 
-// إرسال التحديث إلى Google Sheets تلقائياً
+// إرسال التحديث للشيت فوراً عند الفوز
 function pushPlayerDataToSheet() {
   if (!APPS_SCRIPT_URL || !playerData.phone) return;
+
+  var payload = JSON.stringify({
+    name: playerData.name,
+    phone: playerData.phone,
+    maxStage: playerData.maxStage,
+    coins: playerData.coins
+  });
+
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: playerData.name,
-      phone: playerData.phone,
-      maxStage: playerData.maxStage,
-      coins: playerData.coins
-    })
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: payload
   }).catch(function() {});
 }
 
@@ -142,7 +140,7 @@ function updateUI() {
 
 function continueCurrentStage() {
   if (typeof stages === 'undefined' || stages.length === 0) {
-    alert('جاري تجهيز المراحل... يرجى الانتظار ثانية واحدة.');
+    alert('جاري تجهيز المراحل... يرجى الانتظار ثوانٍ.');
     return;
   }
   var target = playerData.maxStage || 1;
