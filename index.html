@@ -76,7 +76,18 @@
 
       <!-- واجهة 4 خيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
-
+<!-- واجهة صح أو خطأ -->
+      <div id="tf-mode-area" class="tf-container" style="display: none;">
+        <button class="tf-btn tf-true" onclick="checkTrueFalseAnswer('صح')">
+          <span class="tf-icon">✔️</span>
+          <span>صح</span>
+        </button>
+        <button class="tf-btn tf-false" onclick="checkTrueFalseAnswer('خطأ')">
+          <span class="tf-icon">❌</span>
+          <span>خطأ</span>
+        </button>
+      </div>
+      
       <!-- نافذة إشعار النتيجة الاحترافية العائمة -->
       <div id="result-modal" class="result-modal-overlay">
         <div class="result-card" id="result-card-box">
