@@ -41,6 +41,53 @@ body {
   display: flex !important;
 }
 
+/* شاشة تسجيل الدخول */
+.auth-bg {
+  background-color: #F4FBF7;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.auth-box {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 24px 20px;
+  border: 2px solid #D2E3C8;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+.auth-title {
+  color: #2C3E50;
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.auth-sub {
+  color: #64748B;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1.5px solid #D2E3C8;
+  border-radius: 14px;
+  font-size: 15px;
+  margin-bottom: 12px;
+  outline: none;
+  background: #F8FAF7;
+}
+
+.auth-input:focus {
+  border-color: #70B286;
+  background: #FFFFFF;
+}
+
 /* الشاشة الرئيسية */
 .home-bg {
   background-image: url('bg.jpg');
@@ -108,7 +155,7 @@ body {
   border: 2px solid #D2E3C8;
 }
 
-/* شاشة خريطة المراحل ومسار المحراب */
+/* شاشة خريطة المراحل */
 .game-header {
   display: flex;
   justify-content: space-between;
@@ -326,23 +373,55 @@ body {
   border-color: #B71C1C !important;
 }
 
-/* شريط التنبيه الداخلي للنجاح بدلاً من alert */
-.success-banner {
+/* نافذة إشعار النتيجة الاحترافية */
+.result-modal-overlay {
   display: none;
   position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2E7D32;
-  color: #FFFFFF;
-  padding: 14px 28px;
-  border-radius: 20px;
-  font-size: 17px;
-  font-weight: 900;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-  z-index: 100;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
 }
 
+.result-card {
+  width: 82%;
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 26px 20px;
+  text-align: center;
+  border: 3px solid #70B286;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+}
+
+.result-card.wrong-border {
+  border-color: #E57373 !important;
+}
+
+.result-icon {
+  font-size: 46px;
+  margin-bottom: 10px;
+}
+
+#result-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #2C3E50;
+  margin-bottom: 6px;
+}
+
+#result-desc {
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748B;
+  margin-bottom: 18px;
+}
+
+/* نافذة إعدادات الحساب */
 .modal-overlay {
   display: none;
   position: absolute;
