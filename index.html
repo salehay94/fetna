@@ -4,32 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=2500">
+  <link rel="stylesheet" href="style.css?v=5000">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    .islamic-banner-frame {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70px;
+      margin-bottom: 25px;
+    }
+    .banner-arabic-text {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: #1b4d3e;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+      letter-spacing: 1px;
+    }
+  </style>
 </head>
 <body>
 
   <div class="mobile-frame">
 
-<!-- 2. الشاشة الرئيسية -->
-    <section id="screen-home" class="screen home-bg">
-      <div class="top-player-bar">
-        <div class="player-pill" onclick="openModal('profile-modal')">⚙️ <span id="display-player-name">صالح</span> 👤</div>
-        <div class="stat-badge"><span id="home-coins">120</span> نقطة</div>
-      </div>
-
-      <div class="overlay-content">
-        <!-- اللافتة الزخرفية مكتوب بداخلها لا إله إلا الله -->
-        <div class="islamic-banner-frame">
-          <span class="banner-arabic-text">لَا إِلٰهَ إِلَّا اللّٰه</span>
-        </div>
-
-        <div class="action-buttons">
-          <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
-          <button class="btn btn-secondary" onclick="openMapScreen()">خريطة المراحل</button>
-        </div>
+    <!-- 1. شاشة تسجيل الدخول -->
+    <section id="screen-auth" class="screen auth-bg">
+      <div class="auth-box">
+        <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
+        <p class="auth-sub">أدخل اسمك ورقم هاتفك لمتابعة وحفظ تقدمك</p>
+        
+        <input type="text" id="auth-name" class="auth-input" placeholder="اسم اللاعب" />
+        <input type="text" id="auth-phone" class="auth-input" placeholder="رقم الهاتف (مثال: 09xxxxxxxx)" />
+        
+        <button class="btn btn-primary" onclick="handleAuthLogin()">دخول ومتابعة اللعب</button>
       </div>
     </section>
+
     <!-- 2. الشاشة الرئيسية -->
     <section id="screen-home" class="screen home-bg">
       <div class="top-player-bar">
@@ -38,9 +49,13 @@
       </div>
 
       <div class="overlay-content">
+        <div class="islamic-banner-frame">
+          <span class="banner-arabic-text">لَا إِلٰهَ إِلَّا اللّٰه</span>
+        </div>
+
         <div class="action-buttons">
           <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
-          <button class="btn btn-secondary" onclick="showScreen('screen-map')">خريطة المراحل</button>
+          <button class="btn btn-secondary" onclick="openMapScreen()">خريطة المراحل</button>
         </div>
       </div>
     </section>
@@ -58,7 +73,7 @@
     <!-- 4. شاشة اللعب والأسئلة -->
     <section id="screen-game" class="screen">
       <header class="game-header">
-        <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
+        <button class="nav-back" onclick="openMapScreen()">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
         <div class="stat-badge"><span id="game-coins">100</span> نقطة</div>
       </header>
@@ -125,10 +140,10 @@
 
   </div>
 
-  <script src="app.js?v=2500"></script>
-  <script src="stages_data.js?v=2500"></script>
-  <script src="map.js?v=2500"></script>
-  <script src="quiz.js?v=2500"></script>
+  <script src="app.js?v=5000"></script>
+  <script src="stages_data.js?v=5000"></script>
+  <script src="map.js?v=5000"></script>
+  <script src="quiz.js?v=5000"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
