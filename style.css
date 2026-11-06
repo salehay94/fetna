@@ -29,7 +29,7 @@ body {
   flex-direction: column;
 }
 
-/* إخفاء إجباري لأي شاشة ما لم تأخذ كلاس active */
+/* عزل تام للشاشات لمنع أي تراكب */
 .screen {
   display: none !important;
   width: 100%;
@@ -39,65 +39,6 @@ body {
 
 .screen.active {
   display: flex !important;
-}
-
-/* شاشة تسجيل الدخول */
-.auth-bg {
-  background: #F8FAF7;
-  justify-content: center;
-  align-items: center;
-  padding: 24px;
-}
-
-.auth-box {
-  width: 100%;
-  background: #FFFFFF;
-  padding: 30px 20px;
-  border-radius: 24px;
-  border: 2px solid #D2E3C8;
-  text-align: center;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
-}
-
-.auth-title {
-  color: #2C3E50;
-  margin-bottom: 8px;
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.auth-sub {
-  color: #64748B;
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-
-.auth-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid #D2E3C8;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 700;
-  text-align: center;
-  outline: none;
-  margin-bottom: 12px;
-  background: #FAFAFA;
-}
-
-.auth-input:focus {
-  border-color: #70B286;
-  background: #FFFFFF;
-}
-
-.text-link-btn {
-  background: none;
-  border: none;
-  color: #70B286;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 14px;
 }
 
 /* الشاشة الرئيسية */
@@ -167,7 +108,7 @@ body {
   border: 2px solid #D2E3C8;
 }
 
-/* خريطة المراحل */
+/* شاشة خريطة المراحل */
 .game-header {
   display: flex;
   justify-content: space-between;
@@ -175,6 +116,7 @@ body {
   padding: 15px 20px;
   background: #FFFFFF;
   border-bottom: 2px solid #E2E8F0;
+  z-index: 10;
 }
 
 .nav-back {
@@ -197,9 +139,11 @@ body {
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
-  gap: 16px;
-  padding: 25px;
-  background: #F0F4EF;
+  gap: 24px;
+  padding: 40px 25px;
+  background-image: url('bg-map.jpg');
+  background-size: cover;
+  background-position: center;
   overflow-y: auto;
 }
 
@@ -215,6 +159,7 @@ body {
   cursor: pointer;
   border: 3px solid #D2E3C8;
   position: relative;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
 .stage-node.completed {
@@ -242,6 +187,13 @@ body {
   background: #F3C969;
   color: #2C3E50;
   border-color: #E8B86D;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 .stage-node.locked {
@@ -251,7 +203,7 @@ body {
   border-color: #CBD5E1;
 }
 
-/* شاشة السؤال */
+/* شاشة الأسئلة واللعب */
 .question-card {
   background: #FFFFFF;
   margin: 15px 20px;
@@ -342,7 +294,7 @@ body {
   cursor: pointer;
 }
 
-/* خيارات الاختيار من 4 */
+/* خيارات نمط 4 خيارات */
 .choices-container {
   display: flex;
   flex-direction: column;
@@ -424,19 +376,6 @@ body {
 
 .store-desc {
   color: #64748B;
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-
-.btn-google {
-  background: #FFFFFF;
-  color: #2C3E50;
-  border: 1.5px solid #CBD5E1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 15px;
-  padding: 10px;
-  border-radius: 14px;
+  font-size: 14px;
+  margin-bottom: 12px;
 }
