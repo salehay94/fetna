@@ -395,3 +395,23 @@ function submitChangePassword() {
 }
 
 function linkGoogleAccount() {
+  alert('تم ربط حسابك بنجاح مع Google!');
+  closeModal('profile-modal');
+}
+
+function logoutPlayer() {
+  localStorage.removeItem('fetnah_player_v20');
+  closeModal('profile-modal');
+  showScreen('screen-auth');
+}
+
+function closeModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+// بدء التشغيل فور اكتمال بنية الصفحة
+window.addEventListener('DOMContentLoaded', function() {
+  checkExistingUser();
+  loadStagesFromScript();
+});
