@@ -1,6 +1,6 @@
-// إدارة الأسئلة، تجميع الحروف، الخيارات، والمساعدات
 var currentPlayingStage = 1;
 var userGuess = [];
+var isCrosswordSecondWord = false; // لمتابعة الكلمة الثانية في الكلمات المتقاطعة
 
 function startStage(stageNum) {
   if (!stages || stages.length === 0) return alert('المراحل قيد التحميل...');
@@ -8,6 +8,7 @@ function startStage(stageNum) {
   var stage = stages.find(function(s) { return s.id === stageNum; }) || stages[0];
   currentPlayingStage = stage.id;
   userGuess = [];
+  isCrosswordSecondWord = false;
 
   var titleEl = document.getElementById('stage-title');
   var qTextEl = document.getElementById('question-text');
@@ -25,6 +26,14 @@ function startStage(stageNum) {
     if (choiceArea) choiceArea.style.display = 'flex';
     if (hintBtn) hintBtn.style.display = 'none';
     renderChoices(stage.choices, stage.answer);
+  } else if (stage.type === 'crossword') {
+    if (typeBadge) typeBadge.innerText = 'كلمات متقاطعة';
+    if (lettersArea) lettersArea.style.display = 'block';
+    if (choiceArea) choiceArea.style.display = 'none';
+    if (hintBtn) hintBtn.style.display = 'inline-block';
+    alert('مرحلة كلمات متقاطعة! قم بتجميع الكلمة الأولى (أفقي) أولاً.');
+    renderAnswerSlots(stage.answer.length);
+    renderKeyboard(stage.letters);
   } else {
     if (typeBadge) typeBadge.innerText = 'تجميع حروف';
     if (lettersArea) lettersArea.style.display = 'block';
@@ -92,22 +101,39 @@ function renderKeyboard(letters) {
 
 function selectLetter(char, btn) {
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  if (!stage || userGuess.length >= stage.answer.length) return;
+  if (!stage) return;
+
+  var targetAnswer = (stage.type === 'crossword' && isCrosswordSecondWord) ? stage.crossAnswer : stage.answer;
+
+  if (userGuess.length >= targetAnswer.length) return;
 
   userGuess.push({ char: char, btn: btn });
   btn.style.visibility = 'hidden';
   updateSlots();
 
-  if (userGuess.length === stage.answer.length) {
+  if (userGuess.length === targetAnswer.length) {
     var word = userGuess.map(function(i) { return i.char; }).join('');
-    if (word === stage.answer) {
-      setTimeout(function() {
-        alert('أحسنت! إجابة صحيحة 🎉');
-        onStagePassed();
-      }, 200);
+    
+    if (word === targetAnswer) {
+      if (stage.type === 'crossword' && !isCrosswordSecondWord) {
+        setTimeout(function() {
+          alert('أحسنت! الكلمة الأولى (أفقي) صحيحة. الآن قم بتجميع الكلمة الثانية (عمودي) التي تشترك بحرف: ' + stage.intersect);
+          isCrosswordSecondWord = true;
+          userGuess = [];
+          renderAnswerSlots(stage.crossAnswer.length);
+          // إعادة إظهار الأزرار التي تم إخفاؤها للجولة الثانية
+          var keys = document.querySelectorAll('.key-btn');
+          keys.forEach(function(k) { k.style.visibility = 'visible'; });
+        }, 500);
+      } else {
+        setTimeout(function() {
+          alert('أحسنت! إجابة صحيحة وكاملة 🎉');
+          onStagePassed();
+        }, 200);
+      }
     } else {
       setTimeout(function() {
-        alert('إجابة غير صحيحة!');
+        alert('إجابة غير صحيحة، حاول مجدداً!');
         resetGuess();
       }, 200);
     }
@@ -162,11 +188,13 @@ function resetGuess() {
 function useHintRevealLetter() {
   if (playerData.coins < 20) return alert('تحتاج 20 قطعة نقدية!');
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  if (!stage || stage.type !== 'letters') return;
+  if (!stage || stage.type === 'choices') return;
 
+  var targetAnswer = (stage.type === 'crossword' && isCrosswordSecondWord) ? stage.crossAnswer : stage.answer;
   var curLen = userGuess.length;
-  if (curLen < stage.answer.length) {
-    var correctChar = stage.answer[curLen];
+
+  if (curLen < targetAnswer.length) {
+    var correctChar = targetAnswer[curLen];
     playerData.coins -= 20;
     savePlayerData();
     updateUI();
