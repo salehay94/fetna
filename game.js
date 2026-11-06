@@ -1,8 +1,8 @@
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
-// تم وضع رابط الـ Web App الرسمي الخاص بك هنا
+// رابط الـ Apps Script المباشر الخاص بك
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCZT8V6dwv8R5mWCj6n70p4omukxVsyWiYk0cw8CnPuSvvuDKRhfIvB1TKC1qocGMaMA/exec';
 
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+const SHEET_URL = https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0;
 
 let stages = [];
 let currentPlayingStage = 1;
@@ -18,7 +18,7 @@ let playerData = {
 
 // 1. إدارة حساب اللاعب
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_registered_player_v6');
+  const saved = localStorage.getItem('fetnah_registered_player_v7');
   if (saved) {
     try { playerData = JSON.parse(saved); } catch(e) {}
     updateUI();
@@ -45,7 +45,7 @@ function handleAuthLogin() {
   renderMapNodes();
   showScreen('screen-home');
 
-  // مزامنة فورية مع تبويب اللاعبين في شيت جوجل
+  // مزامنة مع تبويب اللاعبين في شيت جوجل
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
@@ -61,7 +61,7 @@ function handleAuthLogin() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_registered_player_v6', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_registered_player_v7', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -73,7 +73,7 @@ function updateUI() {
   });
 }
 
-// 2. استرجاع كلمة المرور عبر الإيميل التلقائي
+// 2. استرجاع كلمة المرور عبر الإيميل
 function openForgotPassModal() {
   document.getElementById('forgot-modal').style.display = 'flex';
 }
@@ -118,12 +118,12 @@ function submitChangePassword() {
 }
 
 function linkGoogleAccount() {
-  alert(`تم ربط حسابك (${playerData.email}) بنجاح مع Google!`);
+  alert(تم ربط حسابك (${playerData.email}) بنجاح مع Google!);
   closeModal('profile-modal');
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_registered_player_v6');
+  localStorage.removeItem('fetnah_registered_player_v7');
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
@@ -131,8 +131,7 @@ function logoutPlayer() {
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
 }
-
-// 4. جلب المراحل وتوزيع الأنماط (تجميع حروف / 4 خيارات)
+// 4. قراءة الشيت والتبديل التلقائي بين النمطين
 async function loadStagesFromSheet() {
   try {
     const res = await fetch(SHEET_URL);
@@ -204,7 +203,7 @@ function startStage(stageNum) {
   const stage = stages.find(s => s.id === stageNum) || stages[0];
   if (!stage) return alert("المرحلة غير متوفرة بعد!");
 
-  document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
+  document.getElementById('stage-title').innerText = المرحلة ${stage.id};
   document.getElementById('question-text').innerText = stage.question;
   
   const typeBadge = document.getElementById('stage-badge-type');
@@ -250,7 +249,6 @@ function renderChoices(choices, correctAnswer) {
     container.appendChild(btn);
   });
 }
-
 function renderAnswerSlots(count) {
   const container = document.getElementById('answer-boxes');
   container.innerHTML = '';
