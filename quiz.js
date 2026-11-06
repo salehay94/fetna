@@ -1,22 +1,58 @@
 var currentPlayingStage = 1;
 var userGuess = [];
 var isCrosswordSecondWord = false;
+var nextActionCallback = null;
 
-function showSuccessNotification(callback) {
-  var banner = document.getElementById('success-banner');
-  if (banner) {
-    banner.style.display = 'block';
-    setTimeout(function() {
-      banner.style.display = 'none';
-      if (callback) callback();
-    }, 700);
-  } else {
+function showGameAlert(isSuccess, title, desc, btnText, callback) {
+  var modal = document.getElementById('result-modal');
+  var card = document.getElementById('result-card-box');
+  var icon = document.getElementById('result-icon');
+  var t = document.getElementById('result-title');
+  var d = document.getElementById('result-desc');
+  var btn = document.getElementById('result-btn');
+
+  if (!modal) {
     if (callback) callback();
+    return;
+  }
+
+  nextActionCallback = callback;
+
+  if (isSuccess) {
+    card.classList.remove('wrong-border');
+    icon.innerText = '🎉';
+    t.innerText = title || 'أحسنت! إجابة صحيحة';
+    t.style.color = '#2E7D32';
+    d.innerText = desc || '+15 🪙 تمت إضافتها لرصيدك';
+    btn.className = 'btn btn-primary';
+    btn.innerText = btnText || 'المرحلة التالية';
+  } else {
+    card.classList.add('wrong-border');
+    icon.innerText = '❌';
+    t.innerText = title || 'إجابة غير صحيحة!';
+    t.style.color = '#C62828';
+    d.innerText = desc || 'حاول مرة أخرى وركّز جيداً';
+    btn.className = 'btn';
+    btn.style.backgroundColor = '#E57373';
+    btn.style.color = '#FFF';
+    btn.innerText = btnText || 'إعادة المحاولة';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function handleResultDismiss() {
+  var modal = document.getElementById('result-modal');
+  if (modal) modal.style.display = 'none';
+  if (nextActionCallback) {
+    var cb = nextActionCallback;
+    nextActionCallback = null;
+    cb();
   }
 }
 
 function startStage(stageNum) {
-  if (!stages || stages.length === 0) return alert('المراحل قيد التحميل...');
+  if (!stages || stages.length === 0) return;
 
   var stage = stages.find(function(s) { return s.id === stageNum; }) || stages[0];
   currentPlayingStage = stage.id;
@@ -70,14 +106,14 @@ function renderChoices(choices, correctAnswer) {
     btn.onclick = function() {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        showSuccessNotification(function() {
+        showGameAlert(true, 'إجابة صحيحة وموفقة!', '+15 🪙 أضيفت إلى حسابك', 'المرحلة التالية ⏩', function() {
           onStagePassed();
         });
       } else {
         btn.classList.add('wrong');
-        setTimeout(function() {
+        showGameAlert(false, 'إجابة غير صحيحة!', 'فكر مجدداً في السؤال وحاول', 'إعادة المحاولة 🔄', function() {
           btn.classList.remove('wrong');
-        }, 500);
+        });
       }
     };
     container.appendChild(btn);
@@ -125,7 +161,7 @@ function selectLetter(char, btn) {
     
     if (word === targetAnswer) {
       if (stage.type === 'crossword' && !isCrosswordSecondWord) {
-        showSuccessNotification(function() {
+        showGameAlert(true, 'أحسنت! الكلمة الأولى صحيحة', 'الآن جمّع الكلمة المتقاطعة الثانية المشتركة', 'متابعة ⏩', function() {
           isCrosswordSecondWord = true;
           userGuess = [];
           renderAnswerSlots(stage.crossAnswer.length);
@@ -133,14 +169,14 @@ function selectLetter(char, btn) {
           keys.forEach(function(k) { k.style.visibility = 'visible'; });
         });
       } else {
-        showSuccessNotification(function() {
+        showGameAlert(true, 'تبارك الله! حللت المرحلة', '+15 🪙 أضيفت إلى حسابك', 'المرحلة التالية ⏩', function() {
           onStagePassed();
         });
       }
     } else {
-      setTimeout(function() {
+      showGameAlert(false, 'الكلمة غير صحيحة', 'حاول ترتيب الحروف بالشكل السليم', 'إعادة المحاولة 🔄', function() {
         resetGuess();
-      }, 400);
+      });
     }
   }
 }
@@ -170,8 +206,9 @@ function onStagePassed() {
   if (currentPlayingStage < stages.length) {
     startStage(currentPlayingStage + 1);
   } else {
-    alert('تبارك الله! ختمت كل المراحل المتوفرة.');
-    showScreen('screen-map');
+    showGameAlert(true, 'ختمت جميع المراحل المتوفرة!', 'تابع معنا الأسئلة الجديدة قريباً', 'العودة للخريطة', function() {
+      showScreen('screen-map');
+    });
   }
 }
 
@@ -191,7 +228,10 @@ function resetGuess() {
 }
 
 function useHintRevealLetter() {
-  if (playerData.coins < 20) return alert('تحتاج 20 قطعة نقدية!');
+  if (playerData.coins < 20) {
+    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 20 🪙 على الأقل لاستخدام التلميح', 'حسناً');
+    return;
+  }
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage || stage.type === 'choices') return;
 
@@ -216,7 +256,10 @@ function useHintRevealLetter() {
 }
 
 function useHintSkipStage() {
-  if (playerData.coins < 50) return alert('تحتاج 50 قطعة نقدية!');
+  if (playerData.coins < 50) {
+    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 50 🪙 لتخطي هذا السؤال', 'حسناً');
+    return;
+  }
   playerData.coins -= 50;
   savePlayerData();
   updateUI();
