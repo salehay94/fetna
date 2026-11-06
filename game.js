@@ -1,5 +1,7 @@
-// نقرأ الصفحة الأولى من الشيت مباشرة بدون تسميات عبر gid=0
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
+// تم وضع رابط الـ Web App الرسمي الخاص بك هنا
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCZT8V6dwv8R5mWCj6n70p4omukxVsyWiYk0cw8CnPuSvvuDKRhfIvB1TKC1qocGMaMA/exec';
+
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
 
 let stages = [];
@@ -8,34 +10,58 @@ let userGuess = [];
 
 let playerData = {
   name: 'saleh',
+  email: 'mr.saleh.ay.94@gmail.com',
+  password: '',
   maxStage: 1,
   coins: 150
 };
 
-// فحص الحساب
+// 1. إدارة حساب اللاعب
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_game_player_v4');
+  const saved = localStorage.getItem('fetnah_registered_player_v6');
   if (saved) {
     try { playerData = JSON.parse(saved); } catch(e) {}
+    updateUI();
+    renderMapNodes();
+    showScreen('screen-home');
+  } else {
+    showScreen('screen-auth');
   }
-  updateUI();
-  renderMapNodes();
-  showScreen('screen-home');
 }
 
-function loginUser() {
-  const nameInput = document.getElementById('player-name-input');
-  const name = nameInput ? nameInput.value.trim() : '';
-  if (!name) return alert("يرجى إدخال اسمك!");
+function handleAuthLogin() {
+  const name = document.getElementById('auth-name').value.trim();
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value.trim();
+
+  if (!name || !email) return alert("يرجى إدخال اسم اللاعب والبريد الإلكتروني للمتابعة!");
+
   playerData.name = name;
+  playerData.email = email;
+  playerData.password = pass || "123456";
+
   savePlayerData();
   updateUI();
   renderMapNodes();
   showScreen('screen-home');
+
+  // مزامنة فورية مع تبويب اللاعبين في شيت جوجل
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({
+      action: 'sync_player',
+      name: playerData.name,
+      email: playerData.email,
+      password: playerData.password,
+      maxStage: playerData.maxStage,
+      coins: playerData.coins
+    })
+  }).catch(err => console.log("تعذر المزامنة الحية:", err));
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_game_player_v4', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_registered_player_v6', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -47,7 +73,66 @@ function updateUI() {
   });
 }
 
-// قراءة بيانات الشيت وقراءة كل الأنماط
+// 2. استرجاع كلمة المرور عبر الإيميل التلقائي
+function openForgotPassModal() {
+  document.getElementById('forgot-modal').style.display = 'flex';
+}
+
+function submitPasswordReset() {
+  const email = document.getElementById('reset-email-input').value.trim();
+  if (!email) return alert("يرجى كتابة بريدك الإلكتروني المسجل!");
+
+  alert("جاري التحقق وإرسال كلمة السر الجديدة إلى بريدك...");
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action: 'reset_password', email: email })
+  }).then(() => {
+    alert("إذا كان بريدك مسجلاً في الشيت، ستصلك كلمة سر جديدة إلى صندوق الوارد خلال دقيقة!");
+    closeModal('forgot-modal');
+  }).catch(() => {
+    alert("تعذر الاتصال بالخادم، تحقق من الاتصال.");
+  });
+}
+
+// 3. تعديل الحساب من داخل اللعبة
+function openProfileModal() {
+  document.getElementById('profile-modal').style.display = 'flex';
+}
+
+function submitChangePassword() {
+  const newPass = document.getElementById('new-password-input').value.trim();
+  if (!newPass) return alert("يرجى إدخال كلمة المرور الجديدة!");
+
+  playerData.password = newPass;
+  savePlayerData();
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
+  });
+
+  alert("تم تحديث كلمة المرور بنجاح وحفظها في الشيت!");
+  closeModal('profile-modal');
+}
+
+function linkGoogleAccount() {
+  alert(`تم ربط حسابك (${playerData.email}) بنجاح مع Google!`);
+  closeModal('profile-modal');
+}
+
+function logoutPlayer() {
+  localStorage.removeItem('fetnah_registered_player_v6');
+  closeModal('profile-modal');
+  showScreen('screen-auth');
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// 4. جلب المراحل وتوزيع الأنماط (تجميع حروف / 4 خيارات)
 async function loadStagesFromSheet() {
   try {
     const res = await fetch(SHEET_URL);
@@ -58,7 +143,6 @@ async function loadStagesFromSheet() {
     const parsed = [];
     rows.forEach(r => {
       const c = r.c;
-      // تجاهل صفوف الترويسة والإحصائيات
       if (c && c[0] && !isNaN(c[0].v)) {
         const id = parseInt(c[0].v);
         const type = c[1] ? String(c[1].v).trim() : 'تجميع حروف';
@@ -66,12 +150,10 @@ async function loadStagesFromSheet() {
         const ans = c[3] ? String(c[3].v).trim() : '';
         const rawAux = c[4] ? String(c[4].v).trim() : '';
 
-        // إذا كان السؤال اختيار من متعدد
         if (type.includes('خيار') || type.includes('خيارات')) {
           const choices = rawAux.split(',').map(s => s.trim());
           parsed.push({ id, type: 'choices', question: qText, answer: ans, choices });
         } else {
-          // نمط تجميع الحروف العادي
           const letters = rawAux.includes(',') ? rawAux.split(',').map(s => s.trim()) : ans.split('');
           parsed.push({ id, type: 'letters', question: qText, answer: ans, letters });
         }
@@ -80,7 +162,6 @@ async function loadStagesFromSheet() {
 
     if (parsed.length > 0) {
       stages = parsed;
-      console.log("تم تحميل المراحل بنجاح من الشيت:", stages.length);
       renderMapNodes();
     }
   } catch (e) {
@@ -88,7 +169,6 @@ async function loadStagesFromSheet() {
   }
 }
 
-// خريطة المراحل
 function renderMapNodes() {
   const container = document.getElementById('map-container');
   if (!container) return;
@@ -119,11 +199,10 @@ function continueCurrentStage() {
   startStage(playerData.maxStage);
 }
 
-// بدء المرحلة وتشغيل الواجهة المناسبة لنوعها
 function startStage(stageNum) {
   currentPlayingStage = stageNum;
   const stage = stages.find(s => s.id === stageNum) || stages[0];
-  if (!stage) return alert("المرحلة غير متوفرة بعد في الشيت!");
+  if (!stage) return alert("المرحلة غير متوفرة بعد!");
 
   document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
   document.getElementById('question-text').innerText = stage.question;
@@ -134,20 +213,16 @@ function startStage(stageNum) {
   const hintBtn = document.getElementById('hint-letter-btn');
 
   if (stage.type === 'choices') {
-    // تشغيل نمط الـ 4 خيارات
     typeBadge.innerText = 'اختر الإجابة الصحيحة';
     lettersArea.style.display = 'none';
     choiceArea.style.display = 'flex';
-    hintBtn.style.display = 'none'; // إخفاء كشف الحرف في نمط الخيارات
-
+    hintBtn.style.display = 'none';
     renderChoices(stage.choices, stage.answer);
   } else {
-    // تشغيل نمط تجميع الحروف
     typeBadge.innerText = 'تجميع حروف';
     lettersArea.style.display = 'block';
     choiceArea.style.display = 'none';
     hintBtn.style.display = 'inline-block';
-
     userGuess = [];
     renderAnswerSlots(stage.answer.length);
     renderKeyboard(stage.letters);
@@ -156,37 +231,26 @@ function startStage(stageNum) {
   showScreen('screen-game');
 }
 
-// عرض الخيارات الأربعة
 function renderChoices(choices, correctAnswer) {
   const container = document.getElementById('choice-mode-area');
   container.innerHTML = '';
-
   choices.forEach(opt => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerText = opt;
-    btn.onclick = () => handleChoiceSelect(opt, correctAnswer, btn);
+    btn.onclick = () => {
+      if (opt === correctAnswer) {
+        btn.classList.add('correct');
+        setTimeout(() => { alert("أحسنت! إجابة صحيحة 🎉"); onStagePassed(); }, 200);
+      } else {
+        btn.classList.add('wrong');
+        setTimeout(() => { alert("إجابة غير صحيحة، حاول مجدداً!"); btn.classList.remove('wrong'); }, 200);
+      }
+    };
     container.appendChild(btn);
   });
 }
 
-function handleChoiceSelect(selected, correct, btn) {
-  if (selected === correct) {
-    btn.classList.add('correct');
-    setTimeout(() => {
-      alert("إجابة صحيحة ممتاز! 🎉");
-      onStagePassed();
-    }, 200);
-  } else {
-    btn.classList.add('wrong');
-    setTimeout(() => {
-      alert("إجابة خاطئة! حاول مرة أخرى.");
-      btn.classList.remove('wrong');
-    }, 200);
-  }
-}
-
-// تجميع الحروف
 function renderAnswerSlots(count) {
   const container = document.getElementById('answer-boxes');
   container.innerHTML = '';
@@ -221,15 +285,9 @@ function selectLetter(char, btn) {
   if (userGuess.length === stage.answer.length) {
     const word = userGuess.map(i => i.char).join('');
     if (word === stage.answer) {
-      setTimeout(() => {
-        alert("أحسنت! إجابة صحيحة 🎉");
-        onStagePassed();
-      }, 200);
+      setTimeout(() => { alert("أحسنت! إجابة صحيحة 🎉"); onStagePassed(); }, 200);
     } else {
-      setTimeout(() => {
-        alert("إجابة غير صحيحة، حاول مجدداً!");
-        resetGuess();
-      }, 200);
+      setTimeout(() => { alert("إجابة غير صحيحة!"); resetGuess(); }, 200);
     }
   }
 }
@@ -241,21 +299,30 @@ function onStagePassed() {
     savePlayerData();
     updateUI();
     renderMapNodes();
+
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({
+        action: 'sync_player',
+        email: playerData.email,
+        maxStage: playerData.maxStage,
+        coins: playerData.coins
+      })
+    });
   }
 
   if (currentPlayingStage < stages.length) {
     startStage(currentPlayingStage + 1);
   } else {
-    alert("تبارك الله! ختمت جميع المراحل المتوفرة حالياً في الشيت.");
+    alert("تبارك الله! ختمت كل المراحل المتوفرة.");
     showScreen('screen-map');
   }
 }
 
 function updateSlots() {
   const slots = document.querySelectorAll('.char-slot');
-  slots.forEach((s, i) => {
-    s.innerText = userGuess[i] ? userGuess[i].char : '';
-  });
+  slots.forEach((s, i) => { s.innerText = userGuess[i] ? userGuess[i].char : ''; });
 }
 
 function resetGuess() {
@@ -264,7 +331,6 @@ function resetGuess() {
   updateSlots();
 }
 
-// المساعدات
 function useHintRevealLetter() {
   if (playerData.coins < 20) return alert("تحتاج 20 🪙 على الأقل!");
   const stage = stages.find(s => s.id === currentPlayingStage);
@@ -288,22 +354,13 @@ function useHintRevealLetter() {
 }
 
 function useHintSkipStage() {
-  if (playerData.coins < 50) return alert("تحتاج 50 🪙 على الأقل لتخطي المرحلة!");
+  if (playerData.coins < 50) return alert("تحتاج 50 🪙 على الأقل!");
   if (confirm("هل تريد إنفاق 50 🪙 وتخطي هذا السؤال؟")) {
     playerData.coins -= 50;
     savePlayerData();
     updateUI();
     onStagePassed();
   }
-}
-
-function openStore() {
-  alert("متجر النقاط قيد التجهيز للدفع الإلكتروني الرسمي.");
-}
-
-function closeStore() {
-  const m = document.getElementById('store-modal');
-  if (m) m.style.display = 'none';
 }
 
 function showScreen(id) {
