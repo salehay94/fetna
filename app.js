@@ -1,4 +1,4 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBRgQ50Yym4IH3NFt8Y45pa2hs_6UvlsQUPE4nLPsvt8UX78KlQD1lsZOo5338YRRuKQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwMEoUfoM0GKY7PHlVXZCWMmROBM5s-geLgxnw5Lsq8edlAFatZBM6DUN1qXg6_Stcog/exec';
 
 var playerData = {
   name: '',
@@ -18,7 +18,6 @@ function showScreen(screenId) {
   }
 }
 
-// فحص الجلسة عند فتح اللعبة
 function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
@@ -35,7 +34,6 @@ function checkExistingUser() {
   showScreen('screen-auth');
 }
 
-// مزامنة المرحلة والرصيد مع Google Sheets
 function syncPlayerData(phone) {
   if (!APPS_SCRIPT_URL || !phone) return;
   fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(phone))
@@ -58,7 +56,6 @@ function syncPlayerData(phone) {
     });
 }
 
-// تسجيل الدخول بالاسم ورقم الهاتف فقط
 function handleAuthLogin() {
   var nameInput = document.getElementById('auth-name');
   var phoneInput = document.getElementById('auth-phone');
@@ -74,7 +71,6 @@ function handleAuthLogin() {
   playerData.name = name;
   playerData.phone = phone;
 
-  // جلب تقدم اللاعب برقم هاتفه مباشرة من الشيت
   fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(phone))
     .then(function(res) { return res.json(); })
     .then(function(resData) {
@@ -82,7 +78,6 @@ function handleAuthLogin() {
         playerData.maxStage = Number(resData.maxStage) || 1;
         playerData.coins = Number(resData.coins) || 100;
       } else {
-        // لاعب جديد يبدأ من المرحلة 1 برصيد 100
         playerData.maxStage = 1;
         playerData.coins = 100;
         pushPlayerDataToSheet();
@@ -93,6 +88,8 @@ function handleAuthLogin() {
       showScreen('screen-home');
     })
     .catch(function() {
+      playerData.maxStage = 1;
+      playerData.coins = 100;
       savePlayerData();
       updateUI();
       showScreen('screen-home');
@@ -103,23 +100,24 @@ function savePlayerData() {
   localStorage.setItem('fetnah_user_phone_session', JSON.stringify(playerData));
 }
 
-// إرسال التحديث للشيت فوراً عند الفوز
+// التحديث اللحظي المباشر إلى الشيت فوراً
 function pushPlayerDataToSheet() {
   if (!APPS_SCRIPT_URL || !playerData.phone) return;
 
-  var payload = JSON.stringify({
-    name: playerData.name,
-    phone: playerData.phone,
-    maxStage: playerData.maxStage,
-    coins: playerData.coins
-  });
+  var url = APPS_SCRIPT_URL + 
+    '?action=update_player' +
+    '&phone=' + encodeURIComponent(playerData.phone) +
+    '&name=' + encodeURIComponent(playerData.name) +
+    '&maxStage=' + encodeURIComponent(playerData.maxStage) +
+    '&coins=' + encodeURIComponent(playerData.coins);
 
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: payload
-  }).catch(function() {});
+  fetch(url, { mode: 'no-cors' })
+    .then(function() {
+      console.log('تم إرسال التحديث للشيت فوراً');
+    })
+    .catch(function(err) {
+      console.log('خطأ تحديث الشيت:', err);
+    });
 }
 
 function updateUI() {
@@ -136,6 +134,13 @@ function updateUI() {
     var el = document.getElementById(coinIds[i]);
     if (el) el.innerText = playerData.coins;
   }
+}
+
+function openMapScreen() {
+  if (typeof renderMapNodes === 'function') {
+    renderMapNodes();
+  }
+  showScreen('screen-map');
 }
 
 function continueCurrentStage() {
