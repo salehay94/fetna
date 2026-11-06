@@ -186,17 +186,19 @@ body {
   display: flex;
   flex-direction: column-reverse;
   gap: 32px;
-  padding: 60px 10px 80px;
+  padding: 60px 10px 100px;
   background-color: #E2ECE9;
   background-image: url('bg-map.jpg');
   background-size: 100% auto;
   background-position: center bottom;
   background-repeat: repeat-y;
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* تثبيت الأبعاد الدائرية لمنع الشكل البيضوي */
+/* دوائر المراحل على الخريطة */
 .stage-node {
   width: 58px;
   height: 58px;
@@ -274,7 +276,7 @@ body {
   border-color: #CBD5E1;
 }
 
-/* 4. شاشة الأسئلة واللعب */
+/* 4. شاشة اللعب والأسئلة */
 #screen-game {
   background-image: url('bg-game.jpg');
   background-size: cover;
