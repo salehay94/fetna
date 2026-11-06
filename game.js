@@ -1,4 +1,4 @@
-// الرابط الجديد المنشور للـ Apps Script
+// الرابط المباشر للـ Apps Script
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzN3JfmOEpwHgEkb4oaAYXufez3ug9Ah94HfYqXPaiUzQWfeirGl2ua9OJCWpKA9V8HGg/exec';
 
 let stages = [];
@@ -13,10 +13,12 @@ let playerData = {
   coins: 150
 };
 
-// 1. إدارة ظهور الشاشات بسلاسة وبدون أي تداخل
+// 1. التنقل بين الشاشات
 function showScreen(screenId) {
   const screens = document.querySelectorAll('.screen');
-  screens.forEach(s => s.classList.remove('active'));
+  screens.forEach(function(s) {
+    s.classList.remove('active');
+  });
   const target = document.getElementById(screenId);
   if (target) {
     target.classList.add('active');
@@ -25,7 +27,7 @@ function showScreen(screenId) {
 
 // 2. التحقق من اللاعب وبدء النظام
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_registered_player_v12');
+  const saved = localStorage.getItem('fetnah_player_v15');
   if (saved) {
     try {
       playerData = JSON.parse(saved);
@@ -45,13 +47,13 @@ function handleAuthLogin() {
   const pass = passInput ? passInput.value.trim() : '';
 
   if (!name || !email) {
-    alert("يرجى إدخال اسم اللاعب والبريد الإلكتروني للمتابعة!");
+    alert('يرجى إدخال اسم اللاعب والبريد الإلكتروني للمتابعة!');
     return;
   }
 
   playerData.name = name;
   playerData.email = email;
-  playerData.password = pass || "123456";
+  playerData.password = pass || '123456';
 
   savePlayerData();
   updateUI();
@@ -70,25 +72,26 @@ function handleAuthLogin() {
         maxStage: playerData.maxStage,
         coins: playerData.coins
       })
-    }).catch(() => {});
+    }).catch(function() {});
   }
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_registered_player_v12', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_player_v15', JSON.stringify(playerData));
 }
 
 function updateUI() {
   const nameEl = document.getElementById('display-player-name');
   if (nameEl) nameEl.innerText = playerData.name || 'اللاعب';
 
-  ['home-coins', 'map-coins', 'game-coins'].forEach(id => {
+  const coinIds = ['home-coins', 'map-coins', 'game-coins'];
+  coinIds.forEach(function(id) {
     const el = document.getElementById(id);
     if (el) el.innerText = playerData.coins;
   });
 }
 
-// 3. جلب جميع المراحل من Google Sheets عبر Apps Script
+// 3. جلب المراحل ديناميكياً من الشيت
 async function loadStagesFromScript() {
   try {
     const res = await fetch(APPS_SCRIPT_URL);
@@ -98,46 +101,47 @@ async function loadStagesFromScript() {
     if (Array.isArray(dynamicStages) && dynamicStages.length > 0) {
       stages = dynamicStages;
       renderMapNodes();
-      console.log("تم تحميل " + stages.length + " مرحلة من الشيت بنجاح.");
+      console.log('تم تحميل ' + stages.length + ' مرحلة من الشيت.');
       return;
     }
   } catch (err) {
-    console.log("تعذر الجلب المباشر، جاري استخدام المراحل التلقائية:", err);
+    console.log('تعذر الجلب المباشر، جاري استخدام المراحل الاحتياطية:', err);
   }
 
-  // مراحل احتياطية إذا لم يتوفر اتصال بالإنترنت لحظياً
+  // مصفوفة احتياطية آمنة في حال تأخر الاستجابة
   if (stages.length === 0) {
     stages = [
-      { id: 1, type: 'letters', question: "من هو أول الأنبياء عليهم السلام؟", answer: "آدم", letters: ["آ","د","م","س","و","ي","ن","ل"] },
-      { id: 2, type: 'letters', question: "أين ولد النبي محمد صلى الله عليه وسلم؟", answer: "مكة", letters: ["م","ك","ة","ق","د","س","ر","ح"] },
-      { id: 3, type: 'letters', question: "من هو خاتم الأنبياء والمرسلين؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي","ف"] },
-      { id: 4, type: 'choices', question: "كم عدد سور القرآن الكريم؟", answer: "114 سورة", choices: ["110 سورة", "112 سورة", "114 سورة", "120 سورة"] }
+      { id: 1, type: 'letters', question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا','ل','ك','ع','ب','ة','م','ق'] },
+      { id: 2, type: 'letters', question: 'المدينة المقدسة التي ولد فيها النبي صلى الله عليه وسلم', answer: 'مكة', letters: ['م','ك','ة','ب','د','ر','س','ع'] },
+      { id: 3, type: 'letters', question: 'من هو خاتم الأنبياء والمرسلين صلى الله عليه وسلم؟', answer: 'محمد', letters: ['م','ح','م','د','ع','ل','ي','س'] },
+      { id: 4, type: 'choices', question: 'كم عدد سور القرآن الكريم؟', answer: '114 سورة', choices: ['110 سورة', '112 سورة', '114 سورة', '120 سورة'] },
+      { id: 5, type: 'choices', question: 'في أي عام هجري وقعت غزوة بدر الكبرى؟', answer: '2 هـ', choices: ['1 هـ', '2 هـ', '3 هـ', '5 هـ'] }
     ];
     renderMapNodes();
   }
 }
 
-// 4. خريطة المراحل
+// 4. بناء خريطة المراحل
 function renderMapNodes() {
   const container = document.getElementById('map-container');
   if (!container) return;
   container.innerHTML = '';
 
-  stages.forEach(st => {
+  stages.forEach(function(st) {
     const node = document.createElement('div');
     node.innerText = st.id;
 
     if (st.id < playerData.maxStage) {
       node.className = 'stage-node completed';
-      node.title = "مرحلة مكتملة - اضغط للإعادة";
-      node.addEventListener('click', () => startStage(st.id));
+      node.title = 'مرحلة مكتملة';
+      node.addEventListener('click', function() { startStage(st.id); });
     } else if (st.id === playerData.maxStage) {
       node.className = 'stage-node current';
-      node.addEventListener('click', () => startStage(st.id));
+      node.addEventListener('click', function() { startStage(st.id); });
     } else {
       node.className = 'stage-node locked';
       node.innerText = '🔒';
-      node.addEventListener('click', () => alert("المرحلة مقفولة! أنجز المراحل السابقة أولاً."));
+      node.addEventListener('click', function() { alert('المرحلة مقفولة! أنجز المراحل السابقة أولاً.'); });
     }
 
     container.appendChild(node);
@@ -146,7 +150,7 @@ function renderMapNodes() {
 
 function continueCurrentStage() {
   if (!stages || stages.length === 0) {
-    alert("جاري تحميل المراحل من الشيت... انتظر ثانية واحدة وأعد المحاولة.");
+    alert('جاري تحميل المراحل... انتظر ثانية واحدة ثم حاول مجدداً.');
     return;
   }
   let target = playerData.maxStage || 1;
@@ -154,17 +158,17 @@ function continueCurrentStage() {
   startStage(target);
 }
 
-// 5. بدء تشغيل مرحلة محددة
+// 5. بدء المرحلة
 function startStage(stageNum) {
-  if (!stages || stages.length === 0) return alert("المراحل قيد التحميل...");
+  if (!stages || stages.length === 0) return alert('المراحل قيد التحميل...');
 
-  let stage = stages.find(s => s.id === stageNum) || stages[0];
+  let stage = stages.find(function(s) { return s.id === stageNum; }) || stages[0];
   currentPlayingStage = stage.id;
   userGuess = [];
 
   const titleEl = document.getElementById('stage-title');
   const qTextEl = document.getElementById('question-text');
-  if (titleEl) titleEl.innerText = `المرحلة ${stage.id}`;
+  if (titleEl) titleEl.innerText = 'المرحلة ' + stage.id;
   if (qTextEl) qTextEl.innerText = stage.question;
 
   const typeBadge = document.getElementById('stage-badge-type');
@@ -195,21 +199,21 @@ function renderChoices(choices, correctAnswer) {
   if (!container) return;
   container.innerHTML = '';
 
-  choices.forEach(opt => {
+  choices.forEach(function(opt) {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerText = opt;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', function() {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        setTimeout(() => {
-          alert("أحسنت! إجابة صحيحة 🎉");
+        setTimeout(function() {
+          alert('أحسنت! إجابة صحيحة 🎉');
           onStagePassed();
         }, 200);
       } else {
         btn.classList.add('wrong');
-        setTimeout(() => {
-          alert("إجابة غير صحيحة، حاول مجدداً!");
+        setTimeout(function() {
+          alert('إجابة غير صحيحة، حاول مجدداً!');
           btn.classList.remove('wrong');
         }, 200);
       }
@@ -233,34 +237,34 @@ function renderKeyboard(letters) {
   const container = document.getElementById('letters-keyboard');
   if (!container) return;
   container.innerHTML = '';
-  const shuffled = [...letters].sort(() => 0.5 - Math.random());
-  shuffled.forEach(char => {
+  const shuffled = letters.slice().sort(function() { return 0.5 - Math.random(); });
+  shuffled.forEach(function(char) {
     const btn = document.createElement('button');
     btn.className = 'key-btn';
     btn.innerText = char;
-    btn.addEventListener('click', () => selectLetter(char, btn));
+    btn.addEventListener('click', function() { selectLetter(char, btn); });
     container.appendChild(btn);
   });
 }
 
 function selectLetter(char, btn) {
-  const stage = stages.find(s => s.id === currentPlayingStage);
+  const stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage || userGuess.length >= stage.answer.length) return;
 
-  userGuess.push({ char, btn });
+  userGuess.push({ char: char, btn: btn });
   btn.style.visibility = 'hidden';
   updateSlots();
 
   if (userGuess.length === stage.answer.length) {
-    const word = userGuess.map(i => i.char).join('');
+    const word = userGuess.map(function(i) { return i.char; }).join('');
     if (word === stage.answer) {
-      setTimeout(() => {
-        alert("أحسنت! إجابة صحيحة 🎉");
+      setTimeout(function() {
+        alert('أحسنت! إجابة صحيحة 🎉');
         onStagePassed();
       }, 200);
     } else {
-      setTimeout(() => {
-        alert("إجابة غير صحيحة!");
+      setTimeout(function() {
+        alert('إجابة غير صحيحة!');
         resetGuess();
       }, 200);
     }
@@ -285,34 +289,36 @@ function onStagePassed() {
           maxStage: playerData.maxStage,
           coins: playerData.coins
         })
-      }).catch(() => {});
+      }).catch(function() {});
     }
   }
 
   if (currentPlayingStage < stages.length) {
     startStage(currentPlayingStage + 1);
   } else {
-    alert("تبارك الله! ختمت كل المراحل المتوفرة.");
+    alert('تبارك الله! ختمت كل المراحل المتوفرة.');
     showScreen('screen-map');
   }
 }
 
 function updateSlots() {
   const slots = document.querySelectorAll('.char-slot');
-  slots.forEach((s, i) => {
+  slots.forEach(function(s, i) {
     s.innerText = userGuess[i] ? userGuess[i].char : '';
   });
 }
 
 function resetGuess() {
-  userGuess.forEach(i => { if (i.btn) i.btn.style.visibility = 'visible'; });
+  userGuess.forEach(function(i) {
+    if (i.btn) i.btn.style.visibility = 'visible';
+  });
   userGuess = [];
   updateSlots();
 }
 
 function useHintRevealLetter() {
-  if (playerData.coins < 20) return alert("تحتاج 20 🪙 على الأقل!");
-  const stage = stages.find(s => s.id === currentPlayingStage);
+  if (playerData.coins < 20) return alert('تحتاج 20 قطعة نقدية على الأقل!');
+  const stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage || stage.type !== 'letters') return;
 
   const curLen = userGuess.length;
@@ -323,7 +329,8 @@ function useHintRevealLetter() {
     updateUI();
 
     const keyBtns = document.querySelectorAll('.key-btn');
-    for (let btn of keyBtns) {
+    for (let i = 0; i < keyBtns.length; i++) {
+      const btn = keyBtns[i];
       if (btn.innerText === correctChar && btn.style.visibility !== 'hidden') {
         selectLetter(correctChar, btn);
         break;
@@ -333,8 +340,8 @@ function useHintRevealLetter() {
 }
 
 function useHintSkipStage() {
-  if (playerData.coins < 50) return alert("تحتاج 50 🪙 على الأقل!");
-  if (confirm("هل تريد إنفاق 50 🪙 وتخطي هذا السؤال؟")) {
+  if (playerData.coins < 50) return alert('تحتاج 50 قطعة نقدية على الأقل!');
+  if (confirm('هل تريد إنفاق 50 قطعة نقدية وتخطي هذا السؤال؟')) {
     playerData.coins -= 50;
     savePlayerData();
     updateUI();
@@ -342,7 +349,6 @@ function useHintSkipStage() {
   }
 }
 
-// 6. استعادة كلمة المرور وإعدادات الحساب
 function openForgotPassModal() {
   const m = document.getElementById('forgot-modal');
   if (m) m.style.display = 'flex';
@@ -351,18 +357,18 @@ function openForgotPassModal() {
 function submitPasswordReset() {
   const emailInput = document.getElementById('reset-email-input');
   const email = emailInput ? emailInput.value.trim() : '';
-  if (!email) return alert("يرجى كتابة بريدك المسجل!");
+  if (!email) return alert('يرجى كتابة بريدك المسجل!');
 
-  alert("جاري التحقق وإرسال كلمة السر إلى بريدك...");
+  alert('جاري إرسال كلمة المرور إلى بريدك الإلكتروني...');
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
-    body: JSON.stringify({ action: 'reset_password', email })
-  }).then(() => {
-    alert("إذا كان بريدك مسجلاً، ستصلك كلمة مرور جديدة فوراً!");
+    body: JSON.stringify({ action: 'reset_password', email: email })
+  }).then(function() {
+    alert('تفقد صندوق الوارد في بريدك الإلكتروني الآن!');
     closeModal('forgot-modal');
-  }).catch(() => {
-    alert("تعذر الاتصال بالخادم.");
+  }).catch(function() {
+    alert('تعذر الاتصال بالخادم.');
   });
 }
 
@@ -374,7 +380,7 @@ function openProfileModal() {
 function submitChangePassword() {
   const passInput = document.getElementById('new-password-input');
   const newPass = passInput ? passInput.value.trim() : '';
-  if (!newPass) return alert("اكتب كلمة المرور الجديدة!");
+  if (!newPass) return alert('اكتب كلمة المرور الجديدة!');
 
   playerData.password = newPass;
   savePlayerData();
@@ -382,19 +388,19 @@ function submitChangePassword() {
     method: 'POST',
     mode: 'no-cors',
     body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
-  }).catch(() => {});
+  }).catch(function() {});
 
-  alert("تم تحديث كلمة المرور!");
+  alert('تم تحديث كلمة المرور بنجاح!');
   closeModal('profile-modal');
 }
 
 function linkGoogleAccount() {
-  alert(`تم ربط حسابك (${playerData.email}) بنجاح مع Google!`);
+  alert('تم ربط حسابك بنجاح مع Google!');
   closeModal('profile-modal');
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_registered_player_v12');
+  localStorage.removeItem('fetnah_player_v15');
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
@@ -404,8 +410,7 @@ function closeModal(id) {
   if (el) el.style.display = 'none';
 }
 
-// بدء التشغيل
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', function() {
   checkExistingUser();
   loadStagesFromScript();
 });
