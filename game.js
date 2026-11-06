@@ -1,7 +1,7 @@
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCZT8V6dwv8R5mWCj6n70p4omukxVsyWiYk0cw8CnPuSvvuDKRhfIvB1TKC1qocGMaMA/exec';
 
-// مراحل مدمجة جاهزة للعمل فوراً من اللحظة الأولى
+// مراحل مدمجة نظيفة لا تعتمد على eval إطلاقاً
 let stages = [
   { id: 1, type: 'letters', question: "من هو أول الأنبياء عليهم السلام؟", answer: "آدم", letters: ["آ","د","م","س","و","ي","ن","ل"] },
   { id: 2, type: 'letters', question: "أين ولد النبي محمد صلى الله عليه وسلم؟", answer: "مكة", letters: ["م","ك","ة","ق","د","س","ر","ح"] },
@@ -22,27 +22,22 @@ let playerData = {
   coins: 150
 };
 
-// 1. إدارة ظهور الشاشات
 function showScreen(screenId) {
   const screens = document.querySelectorAll('.screen');
   screens.forEach(s => s.classList.remove('active'));
   const target = document.getElementById(screenId);
-  if (target) {
-    target.classList.add('active');
-  }
+  if (target) target.classList.add('active');
 }
 
-// 2. فحص الحساب وبدء العرض فوراً
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_registered_player_v9');
+  const saved = localStorage.getItem('fetnah_registered_player_v10');
   if (saved) {
-    try { 
-      playerData = JSON.parse(saved); 
+    try {
+      playerData = JSON.parse(saved);
     } catch(e) {}
   }
   updateUI();
   renderMapNodes();
-  // إظهار الشاشة الرئيسية مباشرة لتفادي أي شاشة بيضاء
   showScreen('screen-home');
 }
 
@@ -69,7 +64,6 @@ function handleAuthLogin() {
   renderMapNodes();
   showScreen('screen-home');
 
-  // مزامنة صامتة في الخلفية
   if (APPS_SCRIPT_URL) {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -82,12 +76,12 @@ function handleAuthLogin() {
         maxStage: playerData.maxStage,
         coins: playerData.coins
       })
-    }).catch(err => console.log("تعذر المزامنة الحية:", err));
+    }).catch(() => {});
   }
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_registered_player_v9', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_registered_player_v10', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -100,7 +94,6 @@ function updateUI() {
   });
 }
 
-// 3. خريطة المراحل
 function renderMapNodes() {
   const container = document.getElementById('map-container');
   if (!container) return;
@@ -113,14 +106,14 @@ function renderMapNodes() {
     if (st.id < playerData.maxStage) {
       node.className = 'stage-node completed';
       node.title = "مرحلة مكتملة - اضغط للإعادة";
-      node.onclick = () => startStage(st.id);
+      node.addEventListener('click', () => startStage(st.id));
     } else if (st.id === playerData.maxStage) {
       node.className = 'stage-node current';
-      node.onclick = () => startStage(st.id);
+      node.addEventListener('click', () => startStage(st.id));
     } else {
       node.className = 'stage-node locked';
       node.innerText = '🔒';
-      node.onclick = () => alert("المرحلة مقفولة! أنجز المراحل السابقة أولاً.");
+      node.addEventListener('click', () => alert("المرحلة مقفولة! أنجز المراحل السابقة أولاً."));
     }
 
     container.appendChild(node);
@@ -133,7 +126,6 @@ function continueCurrentStage() {
   startStage(target);
 }
 
-// 4. بدء تشغيل مرحلة
 function startStage(stageNum) {
   let stage = stages.find(s => s.id === stageNum) || stages[0];
   currentPlayingStage = stage.id;
@@ -143,7 +135,7 @@ function startStage(stageNum) {
   const qTextEl = document.getElementById('question-text');
   if (titleEl) titleEl.innerText = `المرحلة ${stage.id}`;
   if (qTextEl) qTextEl.innerText = stage.question;
-  
+
   const typeBadge = document.getElementById('stage-badge-type');
   const lettersArea = document.getElementById('letters-mode-area');
   const choiceArea = document.getElementById('choice-mode-area');
@@ -176,21 +168,21 @@ function renderChoices(choices, correctAnswer) {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerText = opt;
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        setTimeout(() => { 
-          alert("أحسنت! إجابة صحيحة 🎉"); 
-          onStagePassed(); 
+        setTimeout(() => {
+          alert("أحسنت! إجابة صحيحة 🎉");
+          onStagePassed();
         }, 200);
       } else {
         btn.classList.add('wrong');
-        setTimeout(() => { 
-          alert("إجابة غير صحيحة، حاول مجدداً!"); 
-          btn.classList.remove('wrong'); 
+        setTimeout(() => {
+          alert("إجابة غير صحيحة، حاول مجدداً!");
+          btn.classList.remove('wrong');
         }, 200);
       }
-    };
+    });
     container.appendChild(btn);
   });
 }
@@ -215,7 +207,7 @@ function renderKeyboard(letters) {
     const btn = document.createElement('button');
     btn.className = 'key-btn';
     btn.innerText = char;
-    btn.onclick = () => selectLetter(char, btn);
+    btn.addEventListener('click', () => selectLetter(char, btn));
     container.appendChild(btn);
   });
 }
@@ -231,14 +223,14 @@ function selectLetter(char, btn) {
   if (userGuess.length === stage.answer.length) {
     const word = userGuess.map(i => i.char).join('');
     if (word === stage.answer) {
-      setTimeout(() => { 
-        alert("أحسنت! إجابة صحيحة 🎉"); 
-        onStagePassed(); 
+      setTimeout(() => {
+        alert("أحسنت! إجابة صحيحة 🎉");
+        onStagePassed();
       }, 200);
     } else {
-      setTimeout(() => { 
-        alert("إجابة غير صحيحة!"); 
-        resetGuess(); 
+      setTimeout(() => {
+        alert("إجابة غير صحيحة!");
+        resetGuess();
       }, 200);
     }
   }
@@ -276,8 +268,8 @@ function onStagePassed() {
 
 function updateSlots() {
   const slots = document.querySelectorAll('.char-slot');
-  slots.forEach((s, i) => { 
-    s.innerText = userGuess[i] ? userGuess[i].char : ''; 
+  slots.forEach((s, i) => {
+    s.innerText = userGuess[i] ? userGuess[i].char : '';
   });
 }
 
@@ -319,17 +311,16 @@ function useHintSkipStage() {
   }
 }
 
-// 5. النوافذ واستعادة كلمة المرور
-function openForgotPassModal() { 
+function openForgotPassModal() {
   const m = document.getElementById('forgot-modal');
-  if (m) m.style.display = 'flex'; 
+  if (m) m.style.display = 'flex';
 }
 
 function submitPasswordReset() {
   const emailInput = document.getElementById('reset-email-input');
   const email = emailInput ? emailInput.value.trim() : '';
   if (!email) return alert("يرجى كتابة بريدك المسجل!");
-  
+
   alert("جاري التحقق وإرسال كلمة السر إلى بريدك...");
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
@@ -343,16 +334,16 @@ function submitPasswordReset() {
   });
 }
 
-function openProfileModal() { 
+function openProfileModal() {
   const m = document.getElementById('profile-modal');
-  if (m) m.style.display = 'flex'; 
+  if (m) m.style.display = 'flex';
 }
 
 function submitChangePassword() {
   const passInput = document.getElementById('new-password-input');
   const newPass = passInput ? passInput.value.trim() : '';
   if (!newPass) return alert("اكتب كلمة المرور الجديدة!");
-  
+
   playerData.password = newPass;
   savePlayerData();
   fetch(APPS_SCRIPT_URL, {
@@ -360,7 +351,7 @@ function submitChangePassword() {
     mode: 'no-cors',
     body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
   }).catch(() => {});
-  
+
   alert("تم تحديث كلمة المرور!");
   closeModal('profile-modal');
 }
@@ -371,25 +362,32 @@ function linkGoogleAccount() {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_registered_player_v9');
+  localStorage.removeItem('fetnah_registered_player_v10');
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
 
-function closeModal(id) { 
+function closeModal(id) {
   const el = document.getElementById(id);
-  if (el) el.style.display = 'none'; 
+  if (el) el.style.display = 'none';
 }
 
-// 6. جلب بيانات الشيت في الخلفية بمرونة دون إيقاف اللعبة
+// قراءة بيانات الشيت بـ JSON آمن تماماً وبدون استخدام أي استدعاء ديناميكي محظور
 async function loadStagesSilently() {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
     const res = await fetch(url);
     if (!res.ok) return;
     const text = await res.text();
-    const json = JSON.parse(text.substring(47).slice(0, -2));
-    const rows = json.table.rows;
+    
+    // استخراج محتوى الـ JSON عبر قص النصوص الصريح دون أي eval
+    const startIdx = text.indexOf('{');
+    const endIdx = text.lastIndexOf('}');
+    if (startIdx === -1 || endIdx === -1) return;
+    
+    const jsonStr = text.substring(startIdx, endIdx + 1);
+    const json = JSON.parse(jsonStr);
+    const rows = json.table ? json.table.rows : [];
 
     let dynamicStages = [];
     rows.forEach(r => {
@@ -420,7 +418,7 @@ async function loadStagesSilently() {
   }
 }
 
-// نقطة الانطلاق الفورية
+// تشغيل النظام فور جاهزية الصفحة
 window.addEventListener('DOMContentLoaded', () => {
   checkExistingUser();
   loadStagesSilently();
