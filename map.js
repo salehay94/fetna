@@ -1,15 +1,15 @@
-// تحديد نسب إزاحة الدوائر لتجلس على أحجار الطريق المتعرج تماماً
+// مصفوفة تعرجات الطريق - تتكرر تلقائياً لكل المراحل مهما بلغ عددها
 var pathStepStyles = [
-  { right: '48%' }, // مرحلة 1: في الوسط قريباً من اليمين
-  { right: '44%' }, // مرحلة 2: فوق الحجر الثاني
-  { right: '40%' }, // مرحلة 3: منعطف خفيف لليمين
-  { right: '52%' }, // مرحلة 4: وسط الطريق
-  { right: '62%' }, // مرحلة 5: ميلان لليسار باتجاه الخيمة
-  { right: '55%' }, // مرحلة 6: رجوع للوسط
-  { right: '45%' }, // مرحلة 7: ميلان يمين
-  { right: '42%' }, // مرحلة 8: يمين
-  { right: '48%' }, // مرحلة 9: بداية الدخول للمحراب
-  { right: '48%' }  // مرحلة 10: أمام المحراب
+  { right: '48%' }, // مرحلة 1
+  { right: '44%' }, // مرحلة 2
+  { right: '40%' }, // مرحلة 3
+  { right: '52%' }, // مرحلة 4
+  { right: '62%' }, // مرحلة 5
+  { right: '55%' }, // مرحلة 6
+  { right: '45%' }, // مرحلة 7
+  { right: '42%' }, // مرحلة 8
+  { right: '48%' }, // مرحلة 9
+  { right: '50%' }  // مرحلة 10
 ];
 
 function renderMapNodes() {
@@ -17,26 +17,30 @@ function renderMapNodes() {
   if (!container) return;
   container.innerHTML = '';
 
+  if (!stages || stages.length === 0) {
+    console.log('لا توجد مراحل لعرضها');
+    return;
+  }
+
+  // رسم كل المراحل القادمة من الشيت دون استثناء
   stages.forEach(function(st, index) {
     var node = document.createElement('div');
     
-    // أيقونة نوع التحدي
+    // أيقونة نوع السؤال
     var icon = st.icon;
     if (!icon) {
       if (st.type === 'choices') icon = '🔠';
-      else if (st.type === 'crossword') icon = '🧩';
-      else if (st.type === 'password') icon = '🔑';
+      else if (st.type === 'tf' || st.type === 'true_false') icon = '⚖️';
       else icon = '✍️';
     }
 
-    // تطبيق موضع الانحناء الخاص بالحجر
+    // تدوير التعرج تلقائياً مهما كان رقم المرحلة كبيراً
     var stepStyle = pathStepStyles[(st.id - 1) % pathStepStyles.length];
 
     if (st.id < playerData.maxStage) {
       node.className = 'stage-node completed';
       node.style.right = stepStyle.right;
       node.innerHTML = '<span class="node-num">' + st.id + '</span><span class="node-icon">' + icon + '</span>';
-      node.title = 'مرحلة مكتملة';
       node.onclick = function() { startStage(st.id); };
     } else if (st.id === playerData.maxStage) {
       node.className = 'stage-node current';
@@ -57,8 +61,13 @@ function renderMapNodes() {
     container.appendChild(node);
   });
 
-  // النزول التلقائي لأسفل الخريطة فور فتحها ليظهر رقم 1 أو المرحلة الحالية فوراً
+  // النزول التلقائي للمرحلة الحالية للاعب
   setTimeout(function() {
-    container.scrollTop = container.scrollHeight;
-  }, 100);
+    var currentNode = container.querySelector('.stage-node.current');
+    if (currentNode) {
+      currentNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, 150);
 }
