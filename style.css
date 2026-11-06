@@ -618,3 +618,47 @@ body {
   color: #FFFFFF;
   border-color: #2E7D32;
 }
+/* تنسيق نمط صح أو خطأ */
+.tf-container {
+  display: flex;
+  gap: 16px;
+  padding: 20px 24px 35px;
+  margin-top: auto;
+  justify-content: center;
+}
+
+.tf-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 15px;
+  border-radius: 20px;
+  border: 3px solid transparent;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s;
+}
+
+.tf-btn:active {
+  transform: scale(0.94);
+}
+
+.tf-true {
+  background: linear-gradient(135deg, #43A047, #2E7D32);
+  border-color: #A5D6A7;
+}
+
+.tf-false {
+  background: linear-gradient(135deg, #E53935, #C62828);
+  border-color: #EF9A9A;
+}
+
+.tf-icon {
+  font-size: 32px;
+}
