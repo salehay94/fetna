@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=110">
+  <link rel="stylesheet" href="style.css?v=115">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -68,7 +68,7 @@
         <p id="question-text">جاري تحميل السؤال...</p>
       </div>
 
-      <!-- واجهة تجميع الحروف والكلمات المتقاطعة -->
+      <!-- واجهة تجميع الحروف -->
       <div id="letters-mode-area">
         <div id="answer-boxes" class="answer-row"></div>
         <div class="letters-keyboard" id="letters-keyboard"></div>
@@ -76,7 +76,8 @@
 
       <!-- واجهة 4 خيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
-<!-- واجهة صح أو خطأ -->
+
+      <!-- واجهة صح أو خطأ -->
       <div id="tf-mode-area" class="tf-container" style="display: none;">
         <button class="tf-btn tf-true" onclick="checkTrueFalseAnswer('صح')">
           <span class="tf-icon">✔️</span>
@@ -87,7 +88,7 @@
           <span>خطأ</span>
         </button>
       </div>
-      
+
       <!-- نافذة إشعار النتيجة الاحترافية العائمة -->
       <div id="result-modal" class="result-modal-overlay">
         <div class="result-card" id="result-card-box">
@@ -119,11 +120,10 @@
 
   </div>
 
-  <!-- استدعاء الملفات مع كسر الكاش لضمان التحديث الفوري -->
-  <script src="app.js?v=110"></script>
-  <script src="stages_data.js?v=110"></script>
-  <script src="map.js?v=110"></script>
-  <script src="quiz.js?v=110"></script>
+  <script src="app.js?v=115"></script>
+  <script src="stages_data.js?v=115"></script>
+  <script src="map.js?v=115"></script>
+  <script src="quiz.js?v=115"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
