@@ -1,4 +1,3 @@
-// رسم خريطة المراحل
 function renderMapNodes() {
   var container = document.getElementById('map-container');
   if (!container) return;
@@ -18,7 +17,11 @@ function renderMapNodes() {
     } else {
       node.className = 'stage-node locked';
       node.innerText = '🔒';
-      node.onclick = function() { alert('المرحلة مقفولة! أنجز المراحل السابقة أولاً.'); };
+      node.onclick = function() {
+        if (typeof showGameAlert === 'function') {
+          showGameAlert(false, 'المرحلة مقفولة!', 'يجب عليك إنجاز المراحل السابقة أولاً لتصل إلى هنا.', 'حسناً');
+        }
+      };
     }
 
     container.appendChild(node);
