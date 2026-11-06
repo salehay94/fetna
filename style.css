@@ -185,18 +185,18 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column-reverse;
-  gap: 28px;
-  padding: 50px 20px;
+  gap: 32px;
+  padding: 60px 10px 80px;
   background-color: #E2ECE9;
   background-image: url('bg-map.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-size: 100% auto;
+  background-position: center bottom;
+  background-repeat: repeat-y;
   overflow-y: auto;
   position: relative;
 }
 
-/* تثبيت الأبعاد كدائرة كاملة لمنع التمطط البيضوي */
+/* تثبيت الأبعاد الدائرية لمنع الشكل البيضوي */
 .stage-node {
   width: 58px;
   height: 58px;
@@ -212,16 +212,11 @@ body {
   cursor: pointer;
   border: 3px solid #FFFFFF;
   position: relative;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+  transform: translateX(50%);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
   transition: transform 0.2s;
+  z-index: 2;
 }
-
-/* تموضع المراحل فوق مسار الطريق المتعرج */
-.stage-node.pos-center    { margin-left: auto; margin-right: auto; }
-.stage-node.pos-left      { margin-left: auto; margin-right: 68%; }
-.stage-node.pos-right     { margin-left: 68%; margin-right: auto; }
-.stage-node.pos-mid-left  { margin-left: auto; margin-right: 56%; }
-.stage-node.pos-mid-right { margin-left: 56%; margin-right: auto; }
 
 .node-num {
   font-size: 16px;
@@ -233,7 +228,7 @@ body {
 .node-icon {
   font-size: 11px;
   line-height: 1;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .stage-node.completed {
@@ -267,9 +262,9 @@ body {
 }
 
 @keyframes pulseNode {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  0% { transform: scale(1) translateX(50%); }
+  50% { transform: scale(1.08) translateX(50%); }
+  100% { transform: scale(1) translateX(50%); }
 }
 
 .stage-node.locked {
@@ -288,7 +283,7 @@ body {
 }
 
 .question-card {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   margin: 15px 20px;
   padding: 18px;
   border-radius: 18px;
