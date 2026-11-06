@@ -1,8 +1,10 @@
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
-// رابط الـ Apps Script المباشر الخاص بك
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCZT8V6dwv8R5mWCj6n70p4omukxVsyWiYk0cw8CnPuSvvuDKRhfIvB1TKC1qocGMaMA/exec';
 
-const SHEET_URL = https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0;
+// روابط القراءة المباشرة لكل تبويب باسمه العربي المشفر
+const URL_CHOICES = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('خيارات')}`;
+const URL_LETTERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('المراحل')}`;
+const URL_CROSS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('كلمات_متقاطعة')}`;
 
 let stages = [];
 let currentPlayingStage = 1;
@@ -16,13 +18,12 @@ let playerData = {
   coins: 150
 };
 
-// 1. إدارة حساب اللاعب
+// 1. إدارة الحساب
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_registered_player_v7');
+  const saved = localStorage.getItem('fetnah_registered_player_v8');
   if (saved) {
     try { playerData = JSON.parse(saved); } catch(e) {}
     updateUI();
-    renderMapNodes();
     showScreen('screen-home');
   } else {
     showScreen('screen-auth');
@@ -42,10 +43,8 @@ function handleAuthLogin() {
 
   savePlayerData();
   updateUI();
-  renderMapNodes();
   showScreen('screen-home');
 
-  // مزامنة مع تبويب اللاعبين في شيت جوجل
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
@@ -57,11 +56,11 @@ function handleAuthLogin() {
       maxStage: playerData.maxStage,
       coins: playerData.coins
     })
-  }).catch(err => console.log("تعذر المزامنة الحية:", err));
+  }).catch(err => console.log("تعذر المزامنة:", err));
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_registered_player_v7', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_registered_player_v8', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -73,101 +72,117 @@ function updateUI() {
   });
 }
 
-// 2. استرجاع كلمة المرور عبر الإيميل
-function openForgotPassModal() {
-  document.getElementById('forgot-modal').style.display = 'flex';
-}
-
-function submitPasswordReset() {
-  const email = document.getElementById('reset-email-input').value.trim();
-  if (!email) return alert("يرجى كتابة بريدك الإلكتروني المسجل!");
-
-  alert("جاري التحقق وإرسال كلمة السر الجديدة إلى بريدك...");
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ action: 'reset_password', email: email })
-  }).then(() => {
-    alert("إذا كان بريدك مسجلاً في الشيت، ستصلك كلمة سر جديدة إلى صندوق الوارد خلال دقيقة!");
-    closeModal('forgot-modal');
-  }).catch(() => {
-    alert("تعذر الاتصال بالخادم، تحقق من الاتصال.");
-  });
-}
-
-// 3. تعديل الحساب من داخل اللعبة
-function openProfileModal() {
-  document.getElementById('profile-modal').style.display = 'flex';
-}
-
-function submitChangePassword() {
-  const newPass = document.getElementById('new-password-input').value.trim();
-  if (!newPass) return alert("يرجى إدخال كلمة المرور الجديدة!");
-
-  playerData.password = newPass;
-  savePlayerData();
-
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
-  });
-
-  alert("تم تحديث كلمة المرور بنجاح وحفظها في الشيت!");
-  closeModal('profile-modal');
-}
-
-function linkGoogleAccount() {
-  alert(تم ربط حسابك (${playerData.email}) بنجاح مع Google!);
-  closeModal('profile-modal');
-}
-
-function logoutPlayer() {
-  localStorage.removeItem('fetnah_registered_player_v7');
-  closeModal('profile-modal');
-  showScreen('screen-auth');
-}
-
-function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
-}
-// 4. قراءة الشيت والتبديل التلقائي بين النمطين
-async function loadStagesFromSheet() {
+// 2. دالة مساعدة لقراءة أي تبويب بأمان
+async function fetchSheetRows(url) {
   try {
-    const res = await fetch(SHEET_URL);
+    const res = await fetch(url);
+    if (!res.ok) return [];
     const text = await res.text();
     const json = JSON.parse(text.substring(47).slice(0, -2));
-    const rows = json.table.rows;
+    return json.table.rows || [];
+  } catch(e) {
+    return [];
+  }
+}
 
-    const parsed = [];
-    rows.forEach(r => {
+// 3. قراءة كل التبويبات ودمجها في قائمة مراحل متسلسلة
+async function loadStagesFromSheet() {
+  try {
+    let combinedStages = [];
+    let stageCounter = 1;
+
+    // أولاً: قراءة أسئلة تجميع الحروف من تبويب "المراحل"
+    const rowsLetters = await fetchSheetRows(URL_LETTERS);
+    rowsLetters.forEach(r => {
       const c = r.c;
       if (c && c[0] && !isNaN(c[0].v)) {
-        const id = parseInt(c[0].v);
-        const type = c[1] ? String(c[1].v).trim() : 'تجميع حروف';
-        const qText = c[2] ? String(c[2].v).trim() : '';
-        const ans = c[3] ? String(c[3].v).trim() : '';
-        const rawAux = c[4] ? String(c[4].v).trim() : '';
+        const qText = c[1] ? String(c[1].v).trim() : (c[2] ? String(c[2].v).trim() : '');
+        const ans = c[2] && isNaN(c[2].v) ? String(c[2].v).trim() : (c[3] ? String(c[3].v).trim() : '');
+        const rawLetters = c[3] && String(c[3].v).includes(',') ? String(c[3].v) : (c[4] ? String(c[4].v) : '');
+        const letters = rawLetters ? rawLetters.split(',').map(s => s.trim()) : ans.split('');
 
-        if (type.includes('خيار') || type.includes('خيارات')) {
-          const choices = rawAux.split(',').map(s => s.trim());
-          parsed.push({ id, type: 'choices', question: qText, answer: ans, choices });
-        } else {
-          const letters = rawAux.includes(',') ? rawAux.split(',').map(s => s.trim()) : ans.split('');
-          parsed.push({ id, type: 'letters', question: qText, answer: ans, letters });
+        if (qText && ans) {
+          combinedStages.push({
+            id: stageCounter++,
+            type: 'letters',
+            question: qText,
+            answer: ans,
+            letters: letters
+          });
         }
       }
     });
 
-    if (parsed.length > 0) {
-      stages = parsed;
-      renderMapNodes();
+    // ثانياً: قراءة أسئلة الخيارات من تبويب "خيارات"
+    const rowsChoices = await fetchSheetRows(URL_CHOICES);
+    rowsChoices.forEach(r => {
+      const c = r.c;
+      if (c && c[0] && !isNaN(c[0].v)) {
+        const qText = c[1] ? String(c[1].v).trim() : '';
+        const opt1 = c[2] ? String(c[2].v).trim() : '';
+        const opt2 = c[3] ? String(c[3].v).trim() : '';
+        const opt3 = c[4] ? String(c[4].v).trim() : '';
+        const opt4 = c[5] ? String(c[5].v).trim() : '';
+        const ans = c[6] ? String(c[6].v).trim() : '';
+
+        if (qText && ans) {
+          combinedStages.push({
+            id: stageCounter++,
+            type: 'choices',
+            question: qText,
+            answer: ans,
+            choices: [opt1, opt2, opt3, opt4].filter(Boolean)
+          });
+        }
+      }
+    });
+
+    // ثالثاً: قراءة الكلمات المتقاطعة من تبويب "كلمات_متقاطعة"
+    const rowsCross = await fetchSheetRows(URL_CROSS);
+    let crossGroups = {};
+    rowsCross.forEach(r => {
+      const c = r.c;
+      if (c && c[0] && !isNaN(c[0].v)) {
+        const stNum = parseInt(c[0].v);
+        const dir = c[1] ? String(c[1].v).trim() : 'أفقي';
+        const qText = c[2] ? String(c[2].v).trim() : '';
+        const ans = c[3] ? String(c[3].v).trim() : '';
+        if (!crossGroups[stNum]) crossGroups[stNum] = [];
+        crossGroups[stNum].push({ dir, qText, ans });
+      }
+    });
+
+    Object.keys(crossGroups).forEach(k => {
+      const group = crossGroups[k];
+      if (group.length >= 2) {
+        combinedStages.push({
+          id: stageCounter++,
+          type: 'letters',
+          question: `كلمات متقاطعة:\n1- أفقي: ${group[0].qText}\n2- عمودي: ${group[1].qText}`,
+          answer: group[0].ans,
+          letters: (group[0].ans + group[1].ans).split('')
+        });
+      }
+    });
+
+    if (combinedStages.length > 0) {
+      stages = combinedStages;
+    } else {
+      // احتياطي فوري إذا تأخر الاتصال
+      stages = [
+        { id: 1, type: 'letters', question: "من هو خاتم الأنبياء؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي"] },
+        { id: 2, type: 'choices', question: "كم عدد سور القرآن الكريم؟", answer: "114 سورة", choices: ["110 سورة", "112 سورة", "114 سورة", "120 سورة"] }
+      ];
     }
-  } catch (e) {
-    console.error("فشل قراءة الشيت:", e);
+
+    renderMapNodes();
+  } catch(e) {
+    console.error("خطأ قراءة الشيت:", e);
+    renderMapNodes();
   }
 }
 
+// 4. خريطة المراحل
 function renderMapNodes() {
   const container = document.getElementById('map-container');
   if (!container) return;
@@ -195,15 +210,23 @@ function renderMapNodes() {
 }
 
 function continueCurrentStage() {
-  startStage(playerData.maxStage);
+  if (!stages || stages.length === 0) {
+    alert("جاري تحميل الأسئلة من الشيت... انتظر ثانية ثم أعد المحاولة.");
+    return;
+  }
+  let target = playerData.maxStage;
+  if (target > stages.length) target = stages.length;
+  startStage(target);
 }
 
 function startStage(stageNum) {
-  currentPlayingStage = stageNum;
-  const stage = stages.find(s => s.id === stageNum) || stages[0];
-  if (!stage) return alert("المرحلة غير متوفرة بعد!");
+  if (!stages || stages.length === 0) return alert("المراحل قيد التحميل...");
+  
+  let stage = stages.find(s => s.id === stageNum) || stages[stages.length - 1];
+  currentPlayingStage = stage.id;
+  userGuess = [];
 
-  document.getElementById('stage-title').innerText = المرحلة ${stage.id};
+  document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
   document.getElementById('question-text').innerText = stage.question;
   
   const typeBadge = document.getElementById('stage-badge-type');
@@ -222,7 +245,6 @@ function startStage(stageNum) {
     lettersArea.style.display = 'block';
     choiceArea.style.display = 'none';
     hintBtn.style.display = 'inline-block';
-    userGuess = [];
     renderAnswerSlots(stage.answer.length);
     renderKeyboard(stage.letters);
   }
@@ -249,6 +271,7 @@ function renderChoices(choices, correctAnswer) {
     container.appendChild(btn);
   });
 }
+
 function renderAnswerSlots(count) {
   const container = document.getElementById('answer-boxes');
   container.innerHTML = '';
@@ -361,6 +384,49 @@ function useHintSkipStage() {
   }
 }
 
+// استعادة كلمة المرور
+function openForgotPassModal() { document.getElementById('forgot-modal').style.display = 'flex'; }
+function submitPasswordReset() {
+  const email = document.getElementById('reset-email-input').value.trim();
+  if (!email) return alert("يرجى كتابة بريدك المسجل!");
+  alert("جاري التحقق وإرسال كلمة السر...");
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action: 'reset_password', email })
+  }).then(() => {
+    alert("إذا كان بريدك مسجلاً، ستصلك كلمة مرور جديدة فوراً!");
+    closeModal('forgot-modal');
+  });
+}
+
+function openProfileModal() { document.getElementById('profile-modal').style.display = 'flex'; }
+function submitChangePassword() {
+  const newPass = document.getElementById('new-password-input').value.trim();
+  if (!newPass) return alert("اكتب كلمة المرور الجديدة!");
+  playerData.password = newPass;
+  savePlayerData();
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
+  });
+  alert("تم تحديث كلمة المرور!");
+  closeModal('profile-modal');
+}
+
+function linkGoogleAccount() {
+  alert(`تم ربط حسابك (${playerData.email}) بنجاح مع Google!`);
+  closeModal('profile-modal');
+}
+
+function logoutPlayer() {
+  localStorage.removeItem('fetnah_registered_player_v8');
+  closeModal('profile-modal');
+  showScreen('screen-auth');
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
