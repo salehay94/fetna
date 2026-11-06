@@ -11,7 +11,7 @@
 
   <div class="mobile-frame">
 
-    <!-- 1. شاشة تسجيل الدخول لكل لاعب جديد -->
+    <!-- 1. شاشة تسجيل الدخول -->
     <section id="screen-auth" class="screen auth-bg">
       <div class="auth-box">
         <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
@@ -68,7 +68,7 @@
         <p id="question-text">جاري تحميل السؤال...</p>
       </div>
 
-      <!-- واجهة تجميع الحروف -->
+      <!-- واجهة تجميع الحروف والكلمات المتقاطعة -->
       <div id="letters-mode-area">
         <div id="answer-boxes" class="answer-row"></div>
         <div class="letters-keyboard" id="letters-keyboard"></div>
@@ -81,9 +81,13 @@
       <div id="result-modal" class="result-modal-overlay">
         <div class="result-card" id="result-card-box">
           <div class="result-icon" id="result-icon">🎉</div>
-          <h3 id="result-title">إجابة صحيحة!</h3>
-          <p id="result-desc">+15 🪙 تمت إضافتها لرصيدك</p>
-          <button id="result-btn" class="btn btn-primary" onclick="handleResultDismiss()">المتابعة</button>
+          <h3 id="result-title">ما شاء الله!</h3>
+          <p id="result-desc">+15 نقطة تمت إضافتها لرصيدك</p>
+          
+          <div class="result-actions">
+            <button id="result-btn" class="btn btn-primary" onclick="handleResultDismiss()">المرحلة التالية</button>
+            <button id="result-home-btn" class="btn btn-secondary" onclick="handleResultGoHome()">الرئيسية 🏠</button>
+          </div>
         </div>
       </div>
     </section>
@@ -104,7 +108,6 @@
 
   </div>
 
-  <!-- استدعاء السكريبتات بالترتيب السليم -->
   <script src="app.js"></script>
   <script src="stages_data.js"></script>
   <script src="map.js"></script>
