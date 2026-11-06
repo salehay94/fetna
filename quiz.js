@@ -1,6 +1,19 @@
 var currentPlayingStage = 1;
 var userGuess = [];
-var isCrosswordSecondWord = false; // لمتابعة الكلمة الثانية في الكلمات المتقاطعة
+var isCrosswordSecondWord = false;
+
+function showSuccessNotification(callback) {
+  var banner = document.getElementById('success-banner');
+  if (banner) {
+    banner.style.display = 'block';
+    setTimeout(function() {
+      banner.style.display = 'none';
+      if (callback) callback();
+    }, 700);
+  } else {
+    if (callback) callback();
+  }
+}
 
 function startStage(stageNum) {
   if (!stages || stages.length === 0) return alert('المراحل قيد التحميل...');
@@ -31,7 +44,6 @@ function startStage(stageNum) {
     if (lettersArea) lettersArea.style.display = 'block';
     if (choiceArea) choiceArea.style.display = 'none';
     if (hintBtn) hintBtn.style.display = 'inline-block';
-    alert('مرحلة كلمات متقاطعة! قم بتجميع الكلمة الأولى (أفقي) أولاً.');
     renderAnswerSlots(stage.answer.length);
     renderKeyboard(stage.letters);
   } else {
@@ -58,16 +70,14 @@ function renderChoices(choices, correctAnswer) {
     btn.onclick = function() {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        setTimeout(function() {
-          alert('أحسنت! إجابة صحيحة 🎉');
+        showSuccessNotification(function() {
           onStagePassed();
-        }, 200);
+        });
       } else {
         btn.classList.add('wrong');
         setTimeout(function() {
-          alert('إجابة غير صحيحة، حاول مجدداً!');
           btn.classList.remove('wrong');
-        }, 200);
+        }, 500);
       }
     };
     container.appendChild(btn);
@@ -104,7 +114,6 @@ function selectLetter(char, btn) {
   if (!stage) return;
 
   var targetAnswer = (stage.type === 'crossword' && isCrosswordSecondWord) ? stage.crossAnswer : stage.answer;
-
   if (userGuess.length >= targetAnswer.length) return;
 
   userGuess.push({ char: char, btn: btn });
@@ -116,26 +125,22 @@ function selectLetter(char, btn) {
     
     if (word === targetAnswer) {
       if (stage.type === 'crossword' && !isCrosswordSecondWord) {
-        setTimeout(function() {
-          alert('أحسنت! الكلمة الأولى (أفقي) صحيحة. الآن قم بتجميع الكلمة الثانية (عمودي) التي تشترك بحرف: ' + stage.intersect);
+        showSuccessNotification(function() {
           isCrosswordSecondWord = true;
           userGuess = [];
           renderAnswerSlots(stage.crossAnswer.length);
-          // إعادة إظهار الأزرار التي تم إخفاؤها للجولة الثانية
           var keys = document.querySelectorAll('.key-btn');
           keys.forEach(function(k) { k.style.visibility = 'visible'; });
-        }, 500);
+        });
       } else {
-        setTimeout(function() {
-          alert('أحسنت! إجابة صحيحة وكاملة 🎉');
+        showSuccessNotification(function() {
           onStagePassed();
-        }, 200);
+        });
       }
     } else {
       setTimeout(function() {
-        alert('إجابة غير صحيحة، حاول مجدداً!');
         resetGuess();
-      }, 200);
+      }, 400);
     }
   }
 }
@@ -212,10 +217,8 @@ function useHintRevealLetter() {
 
 function useHintSkipStage() {
   if (playerData.coins < 50) return alert('تحتاج 50 قطعة نقدية!');
-  if (confirm('هل تريد إنفاق 50 قطعة نقدية وتخطي السؤال؟')) {
-    playerData.coins -= 50;
-    savePlayerData();
-    updateUI();
-    onStagePassed();
-  }
+  playerData.coins -= 50;
+  savePlayerData();
+  updateUI();
+  onStagePassed();
 }
