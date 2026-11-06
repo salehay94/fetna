@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=105">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -77,7 +77,7 @@
       <!-- واجهة 4 خيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
 
-      <!-- نافذة إشعار النتيجة الاحترافية المدمجة -->
+      <!-- نافذة إشعار النتيجة الاحترافية العائمة -->
       <div id="result-modal" class="result-modal-overlay">
         <div class="result-card" id="result-card-box">
           <div class="result-icon" id="result-icon">🎉</div>
@@ -108,10 +108,11 @@
 
   </div>
 
-  <script src="app.js"></script>
-  <script src="stages_data.js"></script>
-  <script src="map.js"></script>
-  <script src="quiz.js"></script>
+  <!-- استدعاء الملفات البرمجية مع كسر الكاش لضمان التحديث الفوري -->
+  <script src="app.js?v=105"></script>
+  <script src="stages_data.js?v=105"></script>
+  <script src="map.js?v=105"></script>
+  <script src="quiz.js?v=105"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
