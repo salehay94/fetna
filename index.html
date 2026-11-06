@@ -11,11 +11,25 @@
 
   <div class="mobile-frame">
 
-    <!-- 1. الشاشة الرئيسية -->
-    <section id="screen-home" class="screen home-bg active">
+    <!-- 1. شاشة تسجيل الدخول لكل لاعب جديد -->
+    <section id="screen-auth" class="screen auth-bg">
+      <div class="auth-box">
+        <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
+        <p class="auth-sub">سجّل باسمك لمتابعة تقدمك الخاص</p>
+        
+        <input type="text" id="auth-name" class="auth-input" placeholder="اسم اللاعب" value="" />
+        <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني" value="" />
+        <input type="password" id="auth-pass" class="auth-input" placeholder="كلمة المرور" value="" />
+        
+        <button class="btn btn-primary" onclick="handleAuthLogin()">دخول / تسجيل حساب</button>
+      </div>
+    </section>
+
+    <!-- 2. الشاشة الرئيسية -->
+    <section id="screen-home" class="screen home-bg">
       <div class="top-player-bar">
-        <div class="player-pill" onclick="openModal('profile-modal')">👤 <span id="display-player-name">saleh</span> ⚙️</div>
-        <div class="stat-badge">🪙 <span id="home-coins">150</span></div>
+        <div class="player-pill" onclick="openModal('profile-modal')">👤 <span id="display-player-name">اللاعب</span> ⚙️</div>
+        <div class="stat-badge">🪙 <span id="home-coins">100</span></div>
       </div>
 
       <div class="overlay-content">
@@ -26,22 +40,22 @@
       </div>
     </section>
 
-    <!-- 2. شاشة خريطة المراحل -->
+    <!-- 3. شاشة خريطة المراحل -->
     <section id="screen-map" class="screen">
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
         <h2>خريطة المراحل</h2>
-        <div class="stat-badge">🪙 <span id="map-coins">150</span></div>
+        <div class="stat-badge">🪙 <span id="map-coins">100</span></div>
       </header>
       <div class="map-path" id="map-container"></div>
     </section>
 
-    <!-- 3. شاشة اللعب التفاعلية -->
+    <!-- 4. شاشة اللعب والأسئلة -->
     <section id="screen-game" class="screen">
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
-        <div class="stat-badge">🪙 <span id="game-coins">150</span></div>
+        <div class="stat-badge">🪙 <span id="game-coins">100</span></div>
       </header>
 
       <div class="helpers-bar">
@@ -63,27 +77,34 @@
       <!-- واجهة 4 خيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
 
-      <!-- إشعار نجاح مدمج وأنيق داخل اللعبة -->
-      <div id="success-banner" class="success-banner">
-        <span>🎉 أحسنت! إجابة صحيحة</span>
+      <!-- نافذة إشعار النتيجة الاحترافية المدمجة -->
+      <div id="result-modal" class="result-modal-overlay">
+        <div class="result-card" id="result-card-box">
+          <div class="result-icon" id="result-icon">🎉</div>
+          <h3 id="result-title">إجابة صحيحة!</h3>
+          <p id="result-desc">+15 🪙 تمت إضافتها لرصيدك</p>
+          <button id="result-btn" class="btn btn-primary" onclick="handleResultDismiss()">المتابعة</button>
+        </div>
       </div>
     </section>
 
-    <!-- نافذة الحساب -->
+    <!-- نافذة إعدادات الحساب -->
     <div id="profile-modal" class="modal-overlay">
       <div class="modal-card">
         <div class="modal-header">
           <h3>إعدادات الحساب</h3>
           <button class="close-btn" onclick="closeModal('profile-modal')">✕</button>
         </div>
-        <p class="store-desc">اللاعب: <strong>saleh</strong></p>
-        <p class="store-desc">البريد: mr.saleh.ay.94@gmail.com</p>
+        <p class="store-desc">اللاعب: <strong id="modal-player-name">اللاعب</strong></p>
+        <p class="store-desc">البريد: <strong id="modal-player-email">-</strong></p>
+        <button class="btn" style="background: #E57373; color: #FFF; margin-bottom: 10px;" onclick="logoutPlayer()">تسجيل خروج</button>
         <button class="btn btn-secondary" onclick="closeModal('profile-modal')">إغلاق</button>
       </div>
     </div>
 
   </div>
 
+  <!-- استدعاء السكريبتات بالترتيب السليم -->
   <script src="app.js"></script>
   <script src="stages_data.js"></script>
   <script src="map.js"></script>
