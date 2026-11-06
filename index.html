@@ -1,303 +1,94 @@
-// معرف ملف جوجل شيت الخاص بلعبة فطنة
-const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فِطنة - ألغاز وكلمات إسلامية</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
 
-// تشفير الأسماء العربية للروابط لضمان عدم توقف الطلب
-const URL_LETTERS = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('المراحل')}`;
+  <div class="mobile-frame">
 
-// المراحل الافتراضية تعمل فوراً في كل الظروف حتى لو تأخر اتصال الشيت
-const fallbackStages = [
-  { id: 1, question: "من هو أول الأنبياء عليهم السلام؟", answer: "آدم", letters: ["آ","د","م","س","و","ي","ن","ل"] },
-  { id: 2, question: "أين ولد النبي محمد صلى الله عليه وسلم؟", answer: "مكة", letters: ["م","ك","ة","ق","د","س","ر","ح"] },
-  { id: 3, question: "من هو خاتم الأنبياء والمرسلين؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي","ف"] },
-  { id: 4, question: "ما هي أول قبلة للمسلمين؟", answer: "القدس", letters: ["ا","ل","ق","د","س","م","ك","ة"] },
-  { id: 5, question: "ما هي أطول سورة في القرآن الكريم؟", answer: "البقرة", letters: ["ا","ل","ب","ق","ر","ة","ع","م"] }
-];
+    <!-- شاشة تسجيل الدخول -->
+    <section id="screen-auth" class="screen auth-bg">
+      <div class="auth-box">
+        <h2 class="auth-title">مرحباً بك في فِطنة</h2>
+        <p class="auth-sub">سجّل اسمك لحفظ تقدمك ورصيدك</p>
+        <input type="text" id="player-name-input" class="auth-input" placeholder="اكتب اسم اللاعب..." />
+        <button class="btn btn-primary" onclick="loginUser()">دخول وبدء الرحلة</button>
+      </div>
+    </section>
 
-let stages = [...fallbackStages];
-let currentPlayingStage = 1;
-let userGuess = [];
+    <!-- الشاشة الرئيسية -->
+    <section id="screen-home" class="screen home-bg">
+      <div class="top-player-bar">
+        <div class="player-pill">👤 <span id="display-player-name">saleh</span></div>
+        <div class="stat-badge" onclick="openStore()">🪙 <span id="home-coins">150</span></div>
+      </div>
 
-let playerData = {
-  name: 'saleh',
-  maxStage: 1,
-  coins: 150
-};
+      <div class="overlay-content">
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
+          <button class="btn btn-secondary" onclick="showScreen('screen-map')">خريطة المراحل</button>
+        </div>
+      </div>
+    </section>
 
-// 1. فحص الحساب
-function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_live_player_v3');
-  if (saved) {
-    try {
-      playerData = JSON.parse(saved);
-    } catch(e) {}
-  }
-  updateUI();
-  renderMapNodes();
-  showScreen('screen-home');
-}
+    <!-- شاشة خريطة المراحل -->
+    <section id="screen-map" class="screen">
+      <header class="game-header">
+        <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
+        <h2>خريطة المراحل</h2>
+        <div class="stat-badge" onclick="openStore()">🪙 <span id="map-coins">150</span></div>
+      </header>
+      <div class="map-path" id="map-container"></div>
+    </section>
 
-function loginUser() {
-  const nameInput = document.getElementById('player-name-input');
-  const name = nameInput ? nameInput.value.trim() : '';
-  if (!name) {
-    alert("يرجى إدخال اسم اللاعب للمتابعة!");
-    return;
-  }
-  playerData.name = name;
-  savePlayerData();
-  updateUI();
-  renderMapNodes();
-  showScreen('screen-home');
-}
+    <!-- شاشة اللعب التفاعلية -->
+    <section id="screen-game" class="screen">
+      <header class="game-header">
+        <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
+        <span id="stage-title" class="stage-indicator">المرحلة 1</span>
+        <div class="stat-badge" onclick="openStore()">🪙 <span id="game-coins">150</span></div>
+      </header>
 
-function savePlayerData() {
-  localStorage.setItem('fetnah_live_player_v3', JSON.stringify(playerData));
-}
+      <div class="helpers-bar">
+        <button class="help-btn" id="hint-letter-btn" onclick="useHintRevealLetter()">💡 تلميح (20 🪙)</button>
+        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 🪙)</button>
+      </div>
 
-function updateUI() {
-  const nameLabel = document.getElementById('display-player-name');
-  if (nameLabel) nameLabel.innerText = playerData.name || 'اللاعب';
+      <div class="question-card">
+        <span id="stage-badge-type" class="type-pill">تجميع حروف</span>
+        <p id="question-text">جاري تحميل السؤال...</p>
+      </div>
 
-  const hCoins = document.getElementById('home-coins');
-  const mCoins = document.getElementById('map-coins');
-  const gCoins = document.getElementById('game-coins');
+      <!-- واجهة تجميع الحروف -->
+      <div id="letters-mode-area">
+        <div id="answer-boxes" class="answer-row"></div>
+        <div class="letters-keyboard" id="letters-keyboard"></div>
+      </div>
 
-  if (hCoins) hCoins.innerText = playerData.coins;
-  if (mCoins) mCoins.innerText = playerData.coins;
-  if (gCoins) gCoins.innerText = playerData.coins;
-}
+      <!-- واجهة الاختيار من 4 -->
+      <div id="choice-mode-area" class="choices-container" style="display: none;">
+        <!-- أزرار الخيارات الـ 4 تتولد هنا -->
+      </div>
+    </section>
 
-// 2. قراءة جوجل شيت بدقة وأمان
-async function loadAllStages() {
-  try {
-    const res = await fetch(URL_LETTERS);
-    if (!res.ok) throw new Error("تعذر جلب الشيت");
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47).slice(0, -2));
-    const rows = json.table.rows;
+    <!-- نافذة المتجر -->
+    <div id="store-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>متجر النقاط 🪙</h3>
+          <button class="close-btn" onclick="closeStore()">✕</button>
+        </div>
+        <p class="store-desc">الشراء الحقيقي سيتوفر قريباً عبر بوابات الدفع الرسمية.</p>
+      </div>
+    </div>
 
-    const loaded = [];
-    rows.forEach(r => {
-      const c = r.c;
-      if (c && c[0] && !isNaN(c[0].v)) {
-        const id = parseInt(c[0].v);
-        // التوافق التلقائي مع ترتيب الأعمدة في الشيت
-        const qText = c[2] ? c[2].v : (c[1] ? c[1].v : '');
-        const ans = c[3] ? String(c[3].v).trim() : (c[2] ? String(c[2].v).trim() : '');
-        const rawLetters = c[4] ? String(c[4].v) : (c[3] ? String(c[3].v) : '');
-        const lettersList = rawLetters && String(rawLetters).includes(',') 
-          ? rawLetters.split(',').map(s => s.trim()) 
-          : ans.split('');
+  </div>
 
-        if (id && qText && ans) {
-          loaded.push({ id, question: qText, answer: ans, letters: lettersList });
-        }
-      }
-    });
-
-    if (loaded.length > 0) {
-      stages = loaded;
-      console.log("تم تحديث المراحل من الشيت بنجاح:", stages.length);
-      renderMapNodes();
-    }
-  } catch (err) {
-    console.warn("تنبيه: تم استخدام المراحل الجاهزة بنجاح لضمان استمرار اللعب:", err);
-    stages = [...fallbackStages];
-    renderMapNodes();
-  }
-}
-
-// 3. رسم الخريطة مع حالات القفل والإعادة
-function renderMapNodes() {
-  const container = document.getElementById('map-container');
-  if (!container) return;
-  container.innerHTML = '';
-
-  stages.forEach(st => {
-    const node = document.createElement('div');
-    node.innerText = st.id;
-
-    if (st.id < playerData.maxStage) {
-      node.className = 'stage-node completed';
-      node.title = "مرحلة مكتملة - اضغط للإعادة";
-      node.onclick = () => startStage(st.id);
-    } else if (st.id === playerData.maxStage) {
-      node.className = 'stage-node current';
-      node.onclick = () => startStage(st.id);
-    } else {
-      node.className = 'stage-node locked';
-      node.innerText = '🔒';
-      node.onclick = () => alert("هذه المرحلة مقفولة حتى تجتاز المراحل السابقة!");
-    }
-
-    container.appendChild(node);
-  });
-}
-
-function continueCurrentStage() {
-  startStage(playerData.maxStage);
-}
-
-function startStage(stageNum) {
-  currentPlayingStage = stageNum;
-  const stage = stages.find(s => s.id === stageNum) || stages[0];
-  if (!stage) {
-    alert("المرحلة غير متوفرة!");
-    return;
-  }
-
-  userGuess = [];
-  document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
-  document.getElementById('question-text').innerText = stage.question;
-
-  renderAnswerSlots(stage.answer.length);
-  renderKeyboard(stage.letters);
-  showScreen('screen-game');
-}
-
-function renderAnswerSlots(count) {
-  const container = document.getElementById('answer-boxes');
-  container.innerHTML = '';
-  for (let i = 0; i < count; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'char-slot';
-    container.appendChild(slot);
-  }
-}
-
-function renderKeyboard(letters) {
-  const container = document.getElementById('letters-keyboard');
-  container.innerHTML = '';
-  const shuffled = [...letters].sort(() => 0.5 - Math.random());
-  shuffled.forEach(char => {
-    const btn = document.createElement('button');
-    btn.className = 'key-btn';
-    btn.innerText = char;
-    btn.onclick = () => selectLetter(char, btn);
-    container.appendChild(btn);
-  });
-}
-
-function selectLetter(char, btn) {
-  const stage = stages.find(s => s.id === currentPlayingStage) || stages[0];
-  if (userGuess.length >= stage.answer.length) return;
-
-  userGuess.push({ char: char, btn: btn });
-  btn.style.visibility = 'hidden';
-  updateSlots();
-
-  if (userGuess.length === stage.answer.length) {
-    const word = userGuess.map(item => item.char).join('');
-    if (word === stage.answer) {
-      setTimeout(() => {
-        alert("أحسنت! إجابة صحيحة 🎉");
-
-        if (currentPlayingStage === playerData.maxStage) {
-          playerData.maxStage++;
-          playerData.coins += 15;
-          savePlayerData();
-          updateUI();
-          renderMapNodes();
-        }
-
-        if (currentPlayingStage < stages.length) {
-          startStage(currentPlayingStage + 1);
-        } else {
-          alert("تبارك الله! ختمت جميع المراحل المتوفرة.");
-          showScreen('screen-map');
-        }
-      }, 250);
-    } else {
-      setTimeout(() => {
-        alert("إجابة غير صحيحة، حاول مجدداً!");
-        resetGuess();
-      }, 250);
-    }
-  }
-}
-
-function updateSlots() {
-  const slots = document.querySelectorAll('.char-slot');
-  slots.forEach((s, i) => {
-    s.innerText = userGuess[i] ? userGuess[i].char : '';
-  });
-}
-
-function resetGuess() {
-  userGuess.forEach(item => {
-    if (item.btn) item.btn.style.visibility = 'visible';
-  });
-  userGuess = [];
-  updateSlots();
-}
-
-function useHintRevealLetter() {
-  const cost = 20;
-  if (playerData.coins < cost) {
-    alert("رصيدك لا يكفي! تحتاج 20 🪙 على الأقل.");
-    return;
-  }
-
-  const stage = stages.find(s => s.id === currentPlayingStage);
-  const curLen = userGuess.length;
-  if (curLen < stage.answer.length) {
-    const correctChar = stage.answer[curLen];
-    playerData.coins -= cost;
-    savePlayerData();
-    updateUI();
-
-    const keyBtns = document.querySelectorAll('.key-btn');
-    for (let btn of keyBtns) {
-      if (btn.innerText === correctChar && btn.style.visibility !== 'hidden') {
-        selectLetter(correctChar, btn);
-        break;
-      }
-    }
-  }
-}
-
-function useHintSkipStage() {
-  const cost = 50;
-  if (playerData.coins < cost) {
-    alert("رصيدك لا يكفي لتخطي المرحلة!");
-    return;
-  }
-
-  if (confirm("هل تريد إنفاق 50 🪙 وتخطي هذا السؤال؟")) {
-    playerData.coins -= cost;
-    if (currentPlayingStage === playerData.maxStage) {
-      playerData.maxStage++;
-    }
-    savePlayerData();
-    updateUI();
-    renderMapNodes();
-
-    if (currentPlayingStage < stages.length) {
-      startStage(currentPlayingStage + 1);
-    } else {
-      showScreen('screen-map');
-    }
-  }
-}
-
-function openStore() {
-  alert("متجر الشحن قيد التجهيز للدفع الإلكتروني الرسمي، ولا يوجد شراء حالياً.");
-}
-
-function closeStore() {
-  const modal = document.getElementById('store-modal');
-  if (modal) modal.style.display = 'none';
-}
-
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(screenId);
-  if (target) target.classList.add('active');
-}
-
-// البدء
-window.onload = () => {
-  renderMapNodes();
-  checkExistingUser();
-  loadAllStages();
-};
+  <script src="game.js"></script>
+</body>
+</html>
