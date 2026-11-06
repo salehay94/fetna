@@ -1,14 +1,12 @@
 const SHEET_ID = '1wDdj4cnnBZ8CK63TPe2pvgZ44O_1VTyy9wgYPSeYSss';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCZT8V6dwv8R5mWCj6n70p4omukxVsyWiYk0cw8CnPuSvvuDKRhfIvB1TKC1qocGMaMA/exec';
 
-// مراحل مدمجة نظيفة لا تعتمد على eval إطلاقاً
+// مراحل أولية تعمل فوراً كاحتياط
 let stages = [
   { id: 1, type: 'letters', question: "من هو أول الأنبياء عليهم السلام؟", answer: "آدم", letters: ["آ","د","م","س","و","ي","ن","ل"] },
   { id: 2, type: 'letters', question: "أين ولد النبي محمد صلى الله عليه وسلم؟", answer: "مكة", letters: ["م","ك","ة","ق","د","س","ر","ح"] },
   { id: 3, type: 'letters', question: "من هو خاتم الأنبياء والمرسلين؟", answer: "محمد", letters: ["م","ح","م","د","ع","ل","ي","ف"] },
-  { id: 4, type: 'choices', question: "كم عدد سور القرآن الكريم؟", answer: "114 سورة", choices: ["110 سورة", "112 سورة", "114 سورة", "120 سورة"] },
-  { id: 5, type: 'choices', question: "في أي عام هجري وقعت غزوة بدر الكبرى؟", answer: "2 هـ", choices: ["1 هـ", "2 هـ", "3 هـ", "5 هـ"] },
-  { id: 6, type: 'choices', question: "ما هي أقصر سورة في القرآن الكريم؟", answer: "الكوثر", choices: ["الفلق", "الإخلاص", "الكوثر", "النصر"] }
+  { id: 4, type: 'choices', question: "كم عدد سور القرآن الكريم؟", answer: "114 سورة", choices: ["110 سورة", "112 سورة", "114 سورة", "120 سورة"] }
 ];
 
 let currentPlayingStage = 1;
@@ -30,11 +28,9 @@ function showScreen(screenId) {
 }
 
 function checkExistingUser() {
-  const saved = localStorage.getItem('fetnah_registered_player_v10');
+  const saved = localStorage.getItem('fetnah_registered_player_v11');
   if (saved) {
-    try {
-      playerData = JSON.parse(saved);
-    } catch(e) {}
+    try { playerData = JSON.parse(saved); } catch(e) {}
   }
   updateUI();
   renderMapNodes();
@@ -42,18 +38,11 @@ function checkExistingUser() {
 }
 
 function handleAuthLogin() {
-  const nameInput = document.getElementById('auth-name');
-  const emailInput = document.getElementById('auth-email');
-  const passInput = document.getElementById('auth-pass');
+  const name = document.getElementById('auth-name').value.trim();
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value.trim();
 
-  const name = nameInput ? nameInput.value.trim() : '';
-  const email = emailInput ? emailInput.value.trim() : '';
-  const pass = passInput ? passInput.value.trim() : '';
-
-  if (!name || !email) {
-    alert("يرجى إدخال اسم اللاعب والبريد الإلكتروني للمتابعة!");
-    return;
-  }
+  if (!name || !email) return alert("يرجى إدخال اسم اللاعب والبريد الإلكتروني!");
 
   playerData.name = name;
   playerData.email = email;
@@ -81,13 +70,12 @@ function handleAuthLogin() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_registered_player_v10', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_registered_player_v11', JSON.stringify(playerData));
 }
 
 function updateUI() {
   const nameEl = document.getElementById('display-player-name');
   if (nameEl) nameEl.innerText = playerData.name || 'اللاعب';
-
   ['home-coins', 'map-coins', 'game-coins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerText = playerData.coins;
@@ -105,7 +93,7 @@ function renderMapNodes() {
 
     if (st.id < playerData.maxStage) {
       node.className = 'stage-node completed';
-      node.title = "مرحلة مكتملة - اضغط للإعادة";
+      node.title = "مرحلة مكتملة";
       node.addEventListener('click', () => startStage(st.id));
     } else if (st.id === playerData.maxStage) {
       node.className = 'stage-node current';
@@ -113,9 +101,8 @@ function renderMapNodes() {
     } else {
       node.className = 'stage-node locked';
       node.innerText = '🔒';
-      node.addEventListener('click', () => alert("المرحلة مقفولة! أنجز المراحل السابقة أولاً."));
+      node.addEventListener('click', () => alert("المرحلة مقفولة!"));
     }
-
     container.appendChild(node);
   });
 }
@@ -131,10 +118,8 @@ function startStage(stageNum) {
   currentPlayingStage = stage.id;
   userGuess = [];
 
-  const titleEl = document.getElementById('stage-title');
-  const qTextEl = document.getElementById('question-text');
-  if (titleEl) titleEl.innerText = `المرحلة ${stage.id}`;
-  if (qTextEl) qTextEl.innerText = stage.question;
+  document.getElementById('stage-title').innerText = `المرحلة ${stage.id}`;
+  document.getElementById('question-text').innerText = stage.question;
 
   const typeBadge = document.getElementById('stage-badge-type');
   const lettersArea = document.getElementById('letters-mode-area');
@@ -142,16 +127,16 @@ function startStage(stageNum) {
   const hintBtn = document.getElementById('hint-letter-btn');
 
   if (stage.type === 'choices') {
-    if (typeBadge) typeBadge.innerText = 'اختر الإجابة الصحيحة';
-    if (lettersArea) lettersArea.style.display = 'none';
-    if (choiceArea) choiceArea.style.display = 'flex';
-    if (hintBtn) hintBtn.style.display = 'none';
+    typeBadge.innerText = 'اختر الإجابة الصحيحة';
+    lettersArea.style.display = 'none';
+    choiceArea.style.display = 'flex';
+    hintBtn.style.display = 'none';
     renderChoices(stage.choices, stage.answer);
   } else {
-    if (typeBadge) typeBadge.innerText = 'تجميع حروف';
-    if (lettersArea) lettersArea.style.display = 'block';
-    if (choiceArea) choiceArea.style.display = 'none';
-    if (hintBtn) hintBtn.style.display = 'inline-block';
+    typeBadge.innerText = 'تجميع حروف';
+    lettersArea.style.display = 'block';
+    choiceArea.style.display = 'none';
+    hintBtn.style.display = 'inline-block';
     renderAnswerSlots(stage.answer.length);
     renderKeyboard(stage.letters);
   }
@@ -171,16 +156,10 @@ function renderChoices(choices, correctAnswer) {
     btn.addEventListener('click', () => {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        setTimeout(() => {
-          alert("أحسنت! إجابة صحيحة 🎉");
-          onStagePassed();
-        }, 200);
+        setTimeout(() => { alert("أحسنت! إجابة صحيحة 🎉"); onStagePassed(); }, 200);
       } else {
         btn.classList.add('wrong');
-        setTimeout(() => {
-          alert("إجابة غير صحيحة، حاول مجدداً!");
-          btn.classList.remove('wrong');
-        }, 200);
+        setTimeout(() => { alert("إجابة غير صحيحة!"); btn.classList.remove('wrong'); }, 200);
       }
     });
     container.appendChild(btn);
@@ -223,15 +202,9 @@ function selectLetter(char, btn) {
   if (userGuess.length === stage.answer.length) {
     const word = userGuess.map(i => i.char).join('');
     if (word === stage.answer) {
-      setTimeout(() => {
-        alert("أحسنت! إجابة صحيحة 🎉");
-        onStagePassed();
-      }, 200);
+      setTimeout(() => { alert("أحسنت! إجابة صحيحة 🎉"); onStagePassed(); }, 200);
     } else {
-      setTimeout(() => {
-        alert("إجابة غير صحيحة!");
-        resetGuess();
-      }, 200);
+      setTimeout(() => { alert("إجابة غير صحيحة!"); resetGuess(); }, 200);
     }
   }
 }
@@ -268,9 +241,7 @@ function onStagePassed() {
 
 function updateSlots() {
   const slots = document.querySelectorAll('.char-slot');
-  slots.forEach((s, i) => {
-    s.innerText = userGuess[i] ? userGuess[i].char : '';
-  });
+  slots.forEach((s, i) => { s.innerText = userGuess[i] ? userGuess[i].char : ''; });
 }
 
 function resetGuess() {
@@ -280,7 +251,7 @@ function resetGuess() {
 }
 
 function useHintRevealLetter() {
-  if (playerData.coins < 20) return alert("تحتاج 20 🪙 على الأقل!");
+  if (playerData.coins < 20) return alert("تحتاج 20 🪙!");
   const stage = stages.find(s => s.id === currentPlayingStage);
   if (!stage || stage.type !== 'letters') return;
 
@@ -302,8 +273,8 @@ function useHintRevealLetter() {
 }
 
 function useHintSkipStage() {
-  if (playerData.coins < 50) return alert("تحتاج 50 🪙 على الأقل!");
-  if (confirm("هل تريد إنفاق 50 🪙 وتخطي هذا السؤال؟")) {
+  if (playerData.coins < 50) return alert("تحتاج 50 🪙!");
+  if (confirm("هل تريد إنفاق 50 🪙 وتخطي السؤال؟")) {
     playerData.coins -= 50;
     savePlayerData();
     updateUI();
@@ -311,103 +282,80 @@ function useHintSkipStage() {
   }
 }
 
-function openForgotPassModal() {
-  const m = document.getElementById('forgot-modal');
-  if (m) m.style.display = 'flex';
-}
+function openForgotPassModal() { document.getElementById('forgot-modal').style.display = 'flex'; }
+function openProfileModal() { document.getElementById('profile-modal').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 function submitPasswordReset() {
-  const emailInput = document.getElementById('reset-email-input');
-  const email = emailInput ? emailInput.value.trim() : '';
-  if (!email) return alert("يرجى كتابة بريدك المسجل!");
-
-  alert("جاري التحقق وإرسال كلمة السر إلى بريدك...");
+  const email = document.getElementById('reset-email-input').value.trim();
+  if (!email) return alert("اكتب بريدك المسجل!");
+  alert("جاري إرسال كلمة السر...");
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     body: JSON.stringify({ action: 'reset_password', email })
   }).then(() => {
-    alert("إذا كان بريدك مسجلاً، ستصلك كلمة مرور جديدة فوراً!");
+    alert("تفقد بريدك الإلكتروني الآن!");
     closeModal('forgot-modal');
-  }).catch(() => {
-    alert("تعذر الاتصال بالخادم.");
   });
 }
 
-function openProfileModal() {
-  const m = document.getElementById('profile-modal');
-  if (m) m.style.display = 'flex';
-}
-
 function submitChangePassword() {
-  const passInput = document.getElementById('new-password-input');
-  const newPass = passInput ? passInput.value.trim() : '';
+  const newPass = document.getElementById('new-password-input').value.trim();
   if (!newPass) return alert("اكتب كلمة المرور الجديدة!");
-
   playerData.password = newPass;
   savePlayerData();
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
-  }).catch(() => {});
-
-  alert("تم تحديث كلمة المرور!");
+  });
+  alert("تم التحديث!");
   closeModal('profile-modal');
 }
 
 function linkGoogleAccount() {
-  alert(`تم ربط حسابك (${playerData.email}) بنجاح مع Google!`);
+  alert(`تم الربط مع حساب Google!`);
   closeModal('profile-modal');
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_registered_player_v10');
+  localStorage.removeItem('fetnah_registered_player_v11');
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
 
-function closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-}
-
-// قراءة بيانات الشيت بـ JSON آمن تماماً وبدون استخدام أي استدعاء ديناميكي محظور
+// قراءة بيانات الشيت كنص CSV صريح (بدون أي كود برمجي أو خطر CSP)
 async function loadStagesSilently() {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
-    const res = await fetch(url);
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+    const res = await fetch(csvUrl);
     if (!res.ok) return;
     const text = await res.text();
     
-    // استخراج محتوى الـ JSON عبر قص النصوص الصريح دون أي eval
-    const startIdx = text.indexOf('{');
-    const endIdx = text.lastIndexOf('}');
-    if (startIdx === -1 || endIdx === -1) return;
-    
-    const jsonStr = text.substring(startIdx, endIdx + 1);
-    const json = JSON.parse(jsonStr);
-    const rows = json.table ? json.table.rows : [];
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length <= 1) return;
 
     let dynamicStages = [];
-    rows.forEach(r => {
-      const c = r.c;
-      if (c && c[0] && !isNaN(c[0].v)) {
-        const id = parseInt(c[0].v);
-        const type = c[1] ? String(c[1].v).trim() : 'تجميع حروف';
-        const qText = c[2] ? String(c[2].v).trim() : '';
-        const ans = c[3] ? String(c[3].v).trim() : '';
-        const rawAux = c[4] ? String(c[4].v).trim() : '';
+    for (let i = 1; i < lines.length; i++) {
+      // تفكيك أعمدة سطر الـ CSV
+      const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+      if (cols.length >= 4 && !isNaN(cols[0])) {
+        const id = parseInt(cols[0]);
+        const type = cols[1];
+        const qText = cols[2];
+        const ans = cols[3];
+        const rawAux = cols.slice(4).join(',');
 
-        if (type.includes('خيار') || type.includes('خيارات')) {
-          const choices = rawAux.split(',').map(s => s.trim());
+        if (type.includes('خيار')) {
+          const choices = rawAux.split(',').map(s => s.trim()).filter(Boolean);
           dynamicStages.push({ id, type: 'choices', question: qText, answer: ans, choices });
         } else if (qText && ans) {
-          const letters = rawAux.includes(',') ? rawAux.split(',').map(s => s.trim()) : ans.split('');
+          const letters = rawAux ? rawAux.split(',').map(s => s.trim()).filter(Boolean) : ans.split('');
           dynamicStages.push({ id, type: 'letters', question: qText, answer: ans, letters });
         }
       }
-    });
+    }
 
     if (dynamicStages.length > 0) {
       stages = dynamicStages;
@@ -418,7 +366,6 @@ async function loadStagesSilently() {
   }
 }
 
-// تشغيل النظام فور جاهزية الصفحة
 window.addEventListener('DOMContentLoaded', () => {
   checkExistingUser();
   loadStagesSilently();
