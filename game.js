@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzN3JfmOEpwHgEkb4oaAYXufez3ug9Ah94HfYqXPaiUzQWfeirGl2ua9OJCWpKA9V8HGg/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzN3JfmOEpwHgEkb4oaAYXufez3ug9Ah94HfYqXPaiUzQWfeirGl2ua9OJCWpKA9V8HGg/exec';
 
 var stages = [];
 var currentPlayingStage = 1;
@@ -24,7 +24,7 @@ function showScreen(screenId) {
 }
 
 function checkExistingUser() {
-  var saved = localStorage.getItem('fetnah_player_v22');
+  var saved = localStorage.getItem('fetnah_v30');
   if (saved) {
     try {
       playerData = JSON.parse(saved);
@@ -74,7 +74,7 @@ function handleAuthLogin() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_player_v22', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_v30', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -101,7 +101,7 @@ async function loadStagesFromScript() {
       return;
     }
   } catch (err) {
-    console.log('جاري تشغيل المراحل الاحتياطية:', err);
+    console.log('جاري تشغيل المراحل الأساسية:', err);
   }
 
   if (stages.length === 0) {
@@ -342,68 +342,97 @@ function useHintSkipStage() {
   }
 }
 
-function openForgotPassModal() {
-  var m = document.getElementById('forgot-modal');
-  if (m) m.style.display = 'flex';
-}
+function bindAllEvents() {
+  var btnLogin = document.getElementById('btn-login-submit');
+  if (btnLogin) btnLogin.addEventListener('click', handleAuthLogin);
 
-function submitPasswordReset() {
-  var emailInput = document.getElementById('reset-email-input');
-  var email = emailInput ? emailInput.value.trim() : '';
-  if (!email) return alert('يرجى كتابة بريدك المسجل!');
+  var btnContinue = document.getElementById('btn-continue-game');
+  if (btnContinue) btnContinue.addEventListener('click', continueCurrentStage);
 
-  alert('جاري إرسال كلمة المرور إلى بريدك الإلكتروني...');
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ action: 'reset_password', email: email })
-  }).then(function() {
-    alert('تفقد صندوق الوارد في بريدك الإلكتروني الآن!');
-    closeModal('forgot-modal');
-  }).catch(function() {
-    alert('تعذر الاتصال بالخادم.');
+  var btnToMap = document.getElementById('btn-to-map');
+  if (btnToMap) btnToMap.addEventListener('click', function() { showScreen('screen-map'); });
+
+  var btnMapBack = document.getElementById('btn-map-back');
+  if (btnMapBack) btnMapBack.addEventListener('click', function() { showScreen('screen-home'); });
+
+  var btnGameExit = document.getElementById('btn-game-exit');
+  if (btnGameExit) btnGameExit.addEventListener('click', function() { showScreen('screen-map'); });
+
+  var btnHintLetter = document.getElementById('hint-letter-btn');
+  if (btnHintLetter) btnHintLetter.addEventListener('click', useHintRevealLetter);
+
+  var btnHintSkip = document.getElementById('hint-skip-btn');
+  if (btnHintSkip) btnHintSkip.addEventListener('click', useHintSkipStage);
+
+  var btnOpenForgot = document.getElementById('btn-open-forgot');
+  if (btnOpenForgot) btnOpenForgot.addEventListener('click', function() {
+    var m = document.getElementById('forgot-modal');
+    if (m) m.style.display = 'flex';
+  });
+
+  var btnCloseForgot = document.getElementById('btn-close-forgot');
+  if (btnCloseForgot) btnCloseForgot.addEventListener('click', function() {
+    var m = document.getElementById('forgot-modal');
+    if (m) m.style.display = 'none';
+  });
+
+  var btnSubmitReset = document.getElementById('btn-submit-reset');
+  if (btnSubmitReset) btnSubmitReset.addEventListener('click', function() {
+    var emailInput = document.getElementById('reset-email-input');
+    var email = emailInput ? emailInput.value.trim() : '';
+    if (!email) return alert('يرجى كتابة بريدك المسجل!');
+    alert('جاري إرسال كلمة المرور إلى بريدك الإلكتروني...');
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ action: 'reset_password', email: email })
+    }).then(function() {
+      alert('تفقد صندوق الوارد في بريدك الإلكتروني الآن!');
+      var m = document.getElementById('forgot-modal');
+      if (m) m.style.display = 'none';
+    });
+  });
+
+  var btnOpenProfile = document.getElementById('btn-open-profile');
+  if (btnOpenProfile) btnOpenProfile.addEventListener('click', function() {
+    var m = document.getElementById('profile-modal');
+    if (m) m.style.display = 'flex';
+  });
+
+  var btnCloseProfile = document.getElementById('btn-close-profile');
+  if (btnCloseProfile) btnCloseProfile.addEventListener('click', function() {
+    var m = document.getElementById('profile-modal');
+    if (m) m.style.display = 'none';
+  });
+
+  var btnSaveNewPass = document.getElementById('btn-save-new-pass');
+  if (btnSaveNewPass) btnSaveNewPass.addEventListener('click', function() {
+    var passInput = document.getElementById('new-password-input');
+    var newPass = passInput ? passInput.value.trim() : '';
+    if (!newPass) return alert('اكتب كلمة المرور الجديدة!');
+    playerData.password = newPass;
+    savePlayerData();
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
+    }).catch(function() {});
+    alert('تم تحديث كلمة المرور بنجاح!');
+    var m = document.getElementById('profile-modal');
+    if (m) m.style.display = 'none';
+  });
+
+  var btnLogout = document.getElementById('btn-player-logout');
+  if (btnLogout) btnLogout.addEventListener('click', function() {
+    localStorage.removeItem('fetnah_v30');
+    var m = document.getElementById('profile-modal');
+    if (m) m.style.display = 'none';
+    showScreen('screen-auth');
   });
 }
 
-function openProfileModal() {
-  var m = document.getElementById('profile-modal');
-  if (m) m.style.display = 'flex';
-}
-
-function submitChangePassword() {
-  var passInput = document.getElementById('new-password-input');
-  var newPass = passInput ? passInput.value.trim() : '';
-  if (!newPass) return alert('اكتب كلمة المرور الجديدة!');
-
-  playerData.password = newPass;
-  savePlayerData();
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
-  }).catch(function() {});
-
-  alert('تم تحديث كلمة المرور بنجاح!');
-  closeModal('profile-modal');
-}
-
-function linkGoogleAccount() {
-  alert('تم ربط حسابك بنجاح مع Google!');
-  closeModal('profile-modal');
-}
-
-function logoutPlayer() {
-  localStorage.removeItem('fetnah_player_v22');
-  closeModal('profile-modal');
-  showScreen('screen-auth');
-}
-
-function closeModal(id) {
-  var el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-}
-
 window.addEventListener('DOMContentLoaded', function() {
+  bindAllEvents();
   checkExistingUser();
   loadStagesFromScript();
 });
