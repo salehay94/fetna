@@ -17,6 +17,13 @@ function getRandomPraise() {
   return praisePhrases[index];
 }
 
+function getCurrentStageReward() {
+  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
+  if (!stage) return 15;
+  var r = stage.reward || stage['النقاط'] || stage['المكافأة'] || stage.points;
+  return (r && !isNaN(r)) ? Number(r) : 15;
+}
+
 function showGameAlert(isSuccess, title, desc, btnText, callback) {
   var modal = document.getElementById('result-modal');
   var card = document.getElementById('result-card-box');
@@ -125,8 +132,7 @@ function renderChoices(choices, correctAnswer) {
   if (!container) return;
   container.innerHTML = '';
 
-  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  var stageReward = (stage && stage.reward) ? Number(stage.reward) : 15;
+  var reward = getCurrentStageReward();
 
   choices.forEach(function(opt) {
     var btn = document.createElement('button');
@@ -135,7 +141,7 @@ function renderChoices(choices, correctAnswer) {
     btn.onclick = function() {
       if (opt === correctAnswer) {
         btn.classList.add('correct');
-        showGameAlert(true, '', '+' + stageReward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
+        showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
           onStagePassed();
         });
       } else {
@@ -179,7 +185,7 @@ function selectLetter(char, btn) {
   if (!stage) return;
 
   var targetAnswer = (stage.type === 'crossword' && isCrosswordSecondWord) ? stage.crossAnswer : stage.answer;
-  var stageReward = (stage && stage.reward) ? Number(stage.reward) : 15;
+  var reward = getCurrentStageReward();
 
   if (userGuess.length >= targetAnswer.length) return;
 
@@ -200,7 +206,7 @@ function selectLetter(char, btn) {
           keys.forEach(function(k) { k.style.visibility = 'visible'; });
         });
       } else {
-        showGameAlert(true, '', '+' + stageReward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
+        showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
           onStagePassed();
         });
       }
@@ -213,12 +219,11 @@ function selectLetter(char, btn) {
 }
 
 function onStagePassed() {
-  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
-  var stageReward = (stage && stage.reward) ? Number(stage.reward) : 15;
+  var reward = getCurrentStageReward();
 
   if (currentPlayingStage === playerData.maxStage) {
     playerData.maxStage++;
-    playerData.coins += stageReward;
+    playerData.coins += reward;
     savePlayerData();
     updateUI();
     if (typeof renderMapNodes === 'function') renderMapNodes();
