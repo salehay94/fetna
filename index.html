@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فِطنة - ألغاز وكلمات إسلامية</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="mobile-frame">
+
+    <!-- شاشة تسجيل الدخول -->
+    <section id="screen-auth" class="screen auth-bg">
+      <div class="auth-box">
+        <h2 class="auth-title">مرحباً بك في فِطنة</h2>
+        <p class="auth-sub">سجّل اسمك لحفظ مراحل تقدمك ورصيدك</p>
+        <input type="text" id="player-name-input" class="auth-input" placeholder="اكتب اسم اللاعب..." />
+        <button class="btn btn-primary" onclick="loginUser()">دخول وبدء الرحلة</button>
+      </div>
+    </section>
+
+    <!-- الشاشة الرئيسية -->
+    <section id="screen-home" class="screen home-bg">
+      <div class="top-player-bar">
+        <div class="player-pill">👤 <span id="display-player-name">اللاعب</span></div>
+        <div class="stat-badge coin-clickable" onclick="openStore()">🪙 <span id="home-coins">150</span> ➕</div>
+      </div>
+
+      <div class="overlay-content">
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
+          <button class="btn btn-secondary" onclick="showScreen('screen-map')">خريطة المراحل</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- شاشة خريطة المراحل -->
+    <section id="screen-map" class="screen">
+      <header class="game-header">
+        <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
+        <h2>خريطة المراحل</h2>
+        <div class="stat-badge coin-clickable" onclick="openStore()">🪙 <span id="map-coins">150</span> ➕</div>
+      </header>
+      <div class="map-path" id="map-container"></div>
+    </section>
+
+    <!-- شاشة اللعب -->
+    <section id="screen-game" class="screen">
+      <header class="game-header">
+        <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
+        <span id="stage-title" class="stage-indicator">المرحلة 1</span>
+        <div class="stat-badge coin-clickable" onclick="openStore()">🪙 <span id="game-coins">150</span> ➕</div>
+      </header>
+
+      <div class="helpers-bar">
+        <button class="help-btn" onclick="useHintRevealLetter()">💡 كشف حرف (20 🪙)</button>
+        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 🪙)</button>
+      </div>
+
+      <div class="question-card">
+        <p id="question-text">جاري التحميل...</p>
+      </div>
+
+      <div id="answer-boxes" class="answer-row"></div>
+      <div class="letters-keyboard" id="letters-keyboard"></div>
+    </section>
+
+    <!-- نافذة المتجر -->
+    <div id="store-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>متجر النقاط 🪙</h3>
+          <button class="close-btn" onclick="closeStore()">✕</button>
+        </div>
+        <p class="store-desc">اشحن رصيدك للمساعدات وتخطي الأسئلة</p>
+
+        <div class="packages-list">
+          <div class="pack-item">
+            <div>
+              <strong>باقة 250 نقطة</strong>
+              <small>تكفي لـ 12 تلميحاً</small>
+            </div>
+            <button class="buy-btn" onclick="askBuyConfirmation(250, '$0.99')">0.99 $</button>
+          </div>
+
+          <div class="pack-item featured">
+            <div>
+              <strong>باقة 700 نقطة ⭐</strong>
+              <small>الأكثر توفيراً وطلباً</small>
+            </div>
+            <button class="buy-btn" onclick="askBuyConfirmation(700, '$1.99')">1.99 $</button>
+          </div>
+
+          <div class="pack-item">
+            <div>
+              <strong>باقة 2000 نقطة</strong>
+              <small>رصيد ضخم للمحترفين</small>
+            </div>
+            <button class="buy-btn" onclick="askBuyConfirmation(2000, '$4.99')">4.99 $</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نافذة تأكيد الشراء الصريحة -->
+    <div id="confirm-modal" class="modal-overlay">
+      <div class="modal-card confirm-box">
+        <h3>تأكيد عملية الشراء</h3>
+        <p id="confirm-text">هل تريد تأكيد الشراء؟</p>
+        <div class="confirm-actions">
+          <button class="btn btn-secondary" onclick="closeConfirmModal()">إلغاء</button>
+          <button class="btn btn-primary" id="confirm-pay-btn">تأكيد ودفع</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
