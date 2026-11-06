@@ -54,17 +54,17 @@
         <p id="question-text">جاري تحميل السؤال...</p>
       </div>
 
-      <!-- نمط تجميع الحروف -->
+      <!-- واجهة تجميع الحروف والكلمات المتقاطعة -->
       <div id="letters-mode-area">
         <div id="answer-boxes" class="answer-row"></div>
         <div class="letters-keyboard" id="letters-keyboard"></div>
       </div>
 
-      <!-- نمط 4 خيارات -->
+      <!-- واجهة 4 خيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
     </section>
 
-    <!-- نافذة إعدادات الحساب -->
+    <!-- نافذة الحساب -->
     <div id="profile-modal" class="modal-overlay">
       <div class="modal-card">
         <div class="modal-header">
@@ -79,13 +79,11 @@
 
   </div>
 
-  <!-- استدعاء الملفات البرمجية بالترتيب الصحيح -->
   <script src="app.js"></script>
   <script src="stages_data.js"></script>
   <script src="map.js"></script>
   <script src="quiz.js"></script>
   <script>
-    // تشغيل النظام
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
       loadStages();
@@ -93,15 +91,3 @@
   </script>
 </body>
 </html>
-.map-path {
-  flex: 1;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: 24px;
-  padding: 40px 25px;
-  background-image: url('bg-map.jpg'); /* الصورة الجديدة */
-  background-size: cover;
-  background-position: center;
-  overflow-y: auto;
-}
