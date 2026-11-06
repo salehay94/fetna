@@ -45,6 +45,7 @@ function startStage(stageNumber) {
   }
 }
 
+// 1. نمط صح أو خطأ
 function setupTFMode(stage) {
   var tfArea = document.getElementById('tf-mode-area');
   if (tfArea) tfArea.style.display = 'flex';
@@ -62,6 +63,7 @@ function checkTrueFalseAnswer(userChoice) {
   }
 }
 
+// 2. نمط الاختيار من متعدد
 function setupChoicesMode(stage) {
   var choicesArea = document.getElementById('choice-mode-area');
   if (!choicesArea) return;
@@ -90,6 +92,7 @@ function setupChoicesMode(stage) {
   });
 }
 
+// 3. نمط تجميع الحروف
 function setupLettersMode(stage) {
   var lettersArea = document.getElementById('letters-mode-area');
   if (lettersArea) lettersArea.style.display = 'block';
@@ -167,6 +170,7 @@ function renderAnswerSlots() {
   }
 }
 
+// دالة الفوز وإرسال التحديث الفوري إلى Google Sheets
 function handleStageSuccess(reward) {
   playerData.coins += reward;
   if (currentStageIndex + 1 === playerData.maxStage) {
@@ -174,6 +178,11 @@ function handleStageSuccess(reward) {
   }
   savePlayerData();
   updateUI();
+
+  // إرسال فوري ومباشر إلى الشيت دون أي تأخير
+  if (typeof pushPlayerDataToSheet === 'function') {
+    pushPlayerDataToSheet();
+  }
 
   var resModal = document.getElementById('result-modal');
   var resCard = document.getElementById('result-card-box');
@@ -185,7 +194,7 @@ function handleStageSuccess(reward) {
   if (resCard) resCard.classList.remove('wrong-border');
   if (resIcon) resIcon.innerText = '🎉';
   if (resTitle) resTitle.innerText = 'أحسنت! إجابة صحيحة';
-  if (resDesc) resDesc.innerText = '+' + reward + ' نقطة تمت إضافتها لرصيدك';
+  if (resDesc) resDesc.innerText = '+' + reward + ' نقاط تمت إضافتها لرصيدك';
   if (resBtn) resBtn.innerText = 'المرحلة التالية';
 
   if (resModal) resModal.style.display = 'flex';
@@ -230,6 +239,7 @@ function handleResultGoHome() {
   showScreen('screen-home');
 }
 
+// وسائل المساعدة
 function useHintRevealLetter() {
   var stage = stages[currentStageIndex];
   if (!stage || stage.type !== 'letters') {
@@ -245,6 +255,7 @@ function useHintRevealLetter() {
   playerData.coins -= 20;
   savePlayerData();
   updateUI();
+  if (typeof pushPlayerDataToSheet === 'function') pushPlayerDataToSheet();
 
   var nextIdx = currentInputLetters.length;
   var requiredChar = targetAnswer[nextIdx];
