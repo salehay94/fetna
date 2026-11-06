@@ -1,4 +1,4 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxliYIEMFsp2XWRGVzsv3b_fvW3j-uBok0STJzVGZ8b6t6lrCvthcwtt-d4tQ-qb9SCVw/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyIkOXySRCaVxR8f_yy6WVQXyTHMwSsFnx1Bo4NnoCjSPKRpi84kNAXUktlILJIWok8_A/exec';
 
 var playerData = {
   name: '',
@@ -20,14 +20,19 @@ function showScreen(screenId) {
 }
 
 function checkExistingUser() {
-  var saved = localStorage.getItem('fetnah_user_session_v5');
+  // إعادة ضبط الجلسة العالقة لمرة واحدة لتبدأ المراحل الـ 230 من البداية
+  if (localStorage.getItem('fetnah_cache_flush_v500') !== 'done') {
+    localStorage.removeItem('fetnah_user_session_v6');
+    localStorage.setItem('fetnah_cache_flush_v500', 'done');
+  }
+
+  var saved = localStorage.getItem('fetnah_user_session_v6');
   if (saved) {
     try {
       playerData = JSON.parse(saved);
       if (playerData && playerData.email) {
         updateUI();
         showScreen('screen-home');
-        // جلب أحدث نقاط تم تعديلها في شيت الإكسل
         syncCoinsFromSheet(playerData.email);
         return;
       }
@@ -36,7 +41,6 @@ function checkExistingUser() {
   showScreen('screen-auth');
 }
 
-// دالة فحص وجلب الرصيد من جدول جوجل شيت فور فتح اللعبة
 async function syncCoinsFromSheet(email) {
   if (!APPS_SCRIPT_URL || !email) return;
   try {
@@ -49,7 +53,6 @@ async function syncCoinsFromSheet(email) {
         savePlayerData();
         updateUI();
         if (typeof renderMapNodes === 'function') renderMapNodes();
-        console.log('تم تحديث الرصيد من الإكسل بنجاح: ' + playerData.coins);
       }
     }
   } catch (err) {
@@ -99,7 +102,7 @@ function handleAuthLogin() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_user_session_v5', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_user_session_v6', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -139,7 +142,7 @@ function closeModal(id) {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_user_session_v5');
+  localStorage.removeItem('fetnah_user_session_v6');
   playerData = { name: '', email: '', password: '', maxStage: 1, coins: 100 };
   closeModal('profile-modal');
   showScreen('screen-auth');
