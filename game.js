@@ -1,4 +1,3 @@
-// رابط سكريبت جوجل لجلب وتحديث المراحل
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzN3JfmOEpwHgEkb4oaAYXufez3ug9Ah94HfYqXPaiUzQWfeirGl2ua9OJCWpKA9V8HGg/exec';
 
 var stages = [];
@@ -13,7 +12,6 @@ var playerData = {
   coins: 150
 };
 
-// 1. التنقل بين الشاشات
 function showScreen(screenId) {
   var screens = document.querySelectorAll('.screen');
   for (var i = 0; i < screens.length; i++) {
@@ -25,9 +23,8 @@ function showScreen(screenId) {
   }
 }
 
-// 2. التحقق من حساب اللاعب
 function checkExistingUser() {
-  var saved = localStorage.getItem('fetnah_player_v20');
+  var saved = localStorage.getItem('fetnah_player_v21');
   if (saved) {
     try {
       playerData = JSON.parse(saved);
@@ -77,7 +74,7 @@ function handleAuthLogin() {
 }
 
 function savePlayerData() {
-  localStorage.setItem('fetnah_player_v20', JSON.stringify(playerData));
+  localStorage.setItem('fetnah_player_v21', JSON.stringify(playerData));
 }
 
 function updateUI() {
@@ -91,7 +88,6 @@ function updateUI() {
   }
 }
 
-// 3. جلب المراحل من الشيت عبر Apps Script
 async function loadStagesFromScript() {
   try {
     var res = await fetch(APPS_SCRIPT_URL);
@@ -105,10 +101,9 @@ async function loadStagesFromScript() {
       return;
     }
   } catch (err) {
-    console.log('تعذر الجلب المباشر، جاري تشغيل المراحل الأساسية:', err);
+    console.log('تعذر الجلب المباشر، جاري تشغيل المراحل الاحتياطية:', err);
   }
 
-  // مراحل احتياطية مكتوبة بدون أي رموز كسر تنصيص
   if (stages.length === 0) {
     stages = [
       { id: 1, type: 'letters', question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا', 'ل', 'ك', 'ع', 'ب', 'ة', 'م', 'ق'] },
@@ -121,7 +116,6 @@ async function loadStagesFromScript() {
   }
 }
 
-// 4. خريطة المراحل
 function renderMapNodes() {
   var container = document.getElementById('map-container');
   if (!container) return;
@@ -158,7 +152,6 @@ function continueCurrentStage() {
   startStage(target);
 }
 
-// 5. تشغيل المرحلة والتبديل التلقائي بين النمطين
 function startStage(stageNum) {
   if (!stages || stages.length === 0) return alert('المراحل قيد التحميل...');
 
@@ -400,7 +393,7 @@ function linkGoogleAccount() {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_player_v20');
+  localStorage.removeItem('fetnah_player_v21');
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
@@ -410,7 +403,6 @@ function closeModal(id) {
   if (el) el.style.display = 'none';
 }
 
-// بدء التشغيل فور اكتمال بنية الصفحة
 window.addEventListener('DOMContentLoaded', function() {
   checkExistingUser();
   loadStagesFromScript();
