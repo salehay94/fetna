@@ -51,7 +51,7 @@
       <div class="map-path" id="map-container"></div>
     </section>
 
-    <!-- 4. شاشة اللعب -->
+    <!-- 4. شاشة اللعب التفاعلية -->
     <section id="screen-game" class="screen">
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
@@ -75,46 +75,8 @@
         <div class="letters-keyboard" id="letters-keyboard"></div>
       </div>
 
-      <!-- واجهة الاختيار من 4 خيارات -->
+      <!-- واجهة الاختيار من 4 -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
     </section>
 
     <!-- نافذة استعادة كلمة المرور -->
-    <div id="forgot-modal" class="modal-overlay">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3>استعادة كلمة المرور</h3>
-          <button class="close-btn" onclick="closeModal('forgot-modal')">✕</button>
-        </div>
-        <p class="store-desc">اكتب بريدك المسجل وسيرسل لك النظام كلمة سر جديدة تلقائياً:</p>
-        <input type="email" id="reset-email-input" class="auth-input" placeholder="بريدك الإلكتروني" />
-        <button class="btn btn-primary" onclick="submitPasswordReset()">إرسال كلمة سر جديدة</button>
-      </div>
-    </div>
-    <!-- نافذة تعديل الحساب -->
-    <div id="profile-modal" class="modal-overlay">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3>إعدادات الحساب</h3>
-          <button class="close-btn" onclick="closeModal('profile-modal')">✕</button>
-        </div>
-        <div style="text-align: right; margin-bottom: 15px;">
-          <label style="font-size: 13px; color: #64748B;">تعديل كلمة المرور:</label>
-          <input type="password" id="new-password-input" class="auth-input" placeholder="كلمة المرور الجديدة" />
-          <button class="btn btn-secondary" onclick="submitChangePassword()" style="margin-bottom: 15px;">حفظ كلمة المرور</button>
-          
-          <label style="font-size: 13px; color: #64748B;">ربط الحساب:</label>
-          <button class="btn btn-google" onclick="linkGoogleAccount()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G">
-            ربط مع حساب Google
-          </button>
-        </div>
-        <button class="btn" style="background: #E57373; color: #FFF;" onclick="logoutPlayer()">تسجيل خروج</button>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="game.js"></script>
-</body>
-</html>
