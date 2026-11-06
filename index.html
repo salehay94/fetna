@@ -1,94 +1,69 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
-</head>
-<body>
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("اللاعبين");
+    var data = JSON.parse(e.postData.contents);
+    var action = data.action;
+    var email = data.email ? data.email.trim().toLowerCase() : "";
 
-  <div class="mobile-frame">
+    var rows = sheet.getDataRange().getValues();
 
-    <!-- شاشة تسجيل الدخول -->
-    <section id="screen-auth" class="screen auth-bg">
-      <div class="auth-box">
-        <h2 class="auth-title">مرحباً بك في فِطنة</h2>
-        <p class="auth-sub">سجّل اسمك لحفظ تقدمك ورصيدك</p>
-        <input type="text" id="player-name-input" class="auth-input" placeholder="اكتب اسم اللاعب..." />
-        <button class="btn btn-primary" onclick="loginUser()">دخول وبدء الرحلة</button>
-      </div>
-    </section>
+    // 1. تسجيل أو جلب بيانات اللاعب
+    if (action === "sync_player") {
+      var found = false;
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][2].toString().toLowerCase() === email) {
+          // تحديث المرحلة والرصيد الحالي
+          sheet.getRange(i + 1, 5).setValue(data.maxStage);
+          sheet.getRange(i + 1, 6).setValue(data.coins);
+          found = true;
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "success",
+            password: rows[i][3],
+            maxStage: rows[i][4],
+            coins: rows[i][5]
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      if (!found) {
+        // إضافة لاعب جديد للشيت
+        var newId = rows.length;
+        sheet.appendRow([newId, data.name, email, data.password || "123456", data.maxStage || 1, data.coins || 150]);
+        return ContentService.createTextOutput(JSON.stringify({ status: "created" })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
 
-    <!-- الشاشة الرئيسية -->
-    <section id="screen-home" class="screen home-bg">
-      <div class="top-player-bar">
-        <div class="player-pill">👤 <span id="display-player-name">saleh</span></div>
-        <div class="stat-badge" onclick="openStore()">🪙 <span id="home-coins">150</span></div>
-      </div>
+    // 2. طلب استعادة كلمة المرور وإرسال إيميل تلقائي
+    if (action === "reset_password") {
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][2].toString().toLowerCase() === email) {
+          var playerName = rows[i][1];
+          var newPass = "Fitna-" + Math.floor(1000 + Math.random() * 9000);
+          sheet.getRange(i + 1, 4).setValue(newPass); // تحديث كلمة المرور بالشيت
 
-      <div class="overlay-content">
-        <div class="action-buttons">
-          <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
-          <button class="btn btn-secondary" onclick="showScreen('screen-map')">خريطة المراحل</button>
-        </div>
-      </div>
-    </section>
+          // إرسال الإيميل التلقائي
+          MailApp.sendEmail({
+            to: email,
+            subject: "استعادة حسابك في لعبة فِطنة",
+            body: "أهلاً بك يا " + playerName + "،\n\nتلقينا طلباً لاستعادة كلمة المرور الخاصة بحسابك في لعبة فِطنة.\n\nكلمة مرورك الجديدة هي: " + newPass + "\n\nيمكنك تسجيل الدخول بها الآن وتغييرها من قائمة الإعدادات داخل اللعبة في أي وقت."
+          });
 
-    <!-- شاشة خريطة المراحل -->
-    <section id="screen-map" class="screen">
-      <header class="game-header">
-        <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
-        <h2>خريطة المراحل</h2>
-        <div class="stat-badge" onclick="openStore()">🪙 <span id="map-coins">150</span></div>
-      </header>
-      <div class="map-path" id="map-container"></div>
-    </section>
+          return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "not_found" })).setMimeType(ContentService.MimeType.JSON);
+    }
 
-    <!-- شاشة اللعب التفاعلية -->
-    <section id="screen-game" class="screen">
-      <header class="game-header">
-        <button class="nav-back" onclick="showScreen('screen-map')">خروج</button>
-        <span id="stage-title" class="stage-indicator">المرحلة 1</span>
-        <div class="stat-badge" onclick="openStore()">🪙 <span id="game-coins">150</span></div>
-      </header>
+    // 3. تغيير كلمة المرور من داخل اللعبة
+    if (action === "change_password") {
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][2].toString().toLowerCase() === email) {
+          sheet.getRange(i + 1, 4).setValue(data.newPassword);
+          return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
 
-      <div class="helpers-bar">
-        <button class="help-btn" id="hint-letter-btn" onclick="useHintRevealLetter()">💡 تلميح (20 🪙)</button>
-        <button class="help-btn" onclick="useHintSkipStage()">⏩ تخطي (50 🪙)</button>
-      </div>
-
-      <div class="question-card">
-        <span id="stage-badge-type" class="type-pill">تجميع حروف</span>
-        <p id="question-text">جاري تحميل السؤال...</p>
-      </div>
-
-      <!-- واجهة تجميع الحروف -->
-      <div id="letters-mode-area">
-        <div id="answer-boxes" class="answer-row"></div>
-        <div class="letters-keyboard" id="letters-keyboard"></div>
-      </div>
-
-      <!-- واجهة الاختيار من 4 -->
-      <div id="choice-mode-area" class="choices-container" style="display: none;">
-        <!-- أزرار الخيارات الـ 4 تتولد هنا -->
-      </div>
-    </section>
-
-    <!-- نافذة المتجر -->
-    <div id="store-modal" class="modal-overlay">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3>متجر النقاط 🪙</h3>
-          <button class="close-btn" onclick="closeStore()">✕</button>
-        </div>
-        <p class="store-desc">الشراء الحقيقي سيتوفر قريباً عبر بوابات الدفع الرسمية.</p>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="game.js"></script>
-</body>
-</html>
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
