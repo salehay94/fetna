@@ -1,4 +1,4 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBRgQ50Yym4IH3NFt8Y45pa2hs_6UvlsQUPE4nLPsvt8UX78KlQD1lsZOo5338YRRuKQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwMEoUfoM0GKY7PHlVXZCWMmROBM5s-geLgxnw5Lsq8edlAFatZBM6DUN1qXg6_Stcog/exec';
 var stages = [];
 
 function loadStages() {
@@ -34,16 +34,16 @@ function loadStages() {
           });
         }
 
-        console.log('نجاح: تم تحميل ' + stages.length + ' مرحلة من الشيت بنجاح.');
+        console.log('تم تحميل ' + stages.length + ' مرحلة من الشيت بنجاح.');
         if (typeof renderMapNodes === 'function') {
           renderMapNodes();
         }
       } else {
-        throw new Error('البيانات المستلمة فارغة');
+        throw new Error('البيانات فارغة');
       }
     })
     .catch(function(err) {
-      console.warn('تنبيه: تعذر الاتصال بالشيت، تم اعتماد المراحل الاحتياطية:', err);
+      console.warn('تنبيه: تم اعتماد المراحل الاحتياطية:', err);
       stages = [
         { id: 1, type: 'letters', icon: '✍️', reward: 5, question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا', 'ل', 'ك', 'ع', 'ب', 'ة', 'م', 'ق'] },
         { id: 2, type: 'letters', icon: '✍️', reward: 5, question: 'المدينة المقدسة التي ولد فيها النبي ﷺ', answer: 'مكة', letters: ['م', 'ك', 'ة', 'ب', 'د', 'ر', 'س', 'ع'] },
