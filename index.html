@@ -6,6 +6,10 @@
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ضمان ظهور الشاشة فوراً دون أي شاشة بيضاء */
+    #screen-home { display: flex !important; }
+  </style>
 </head>
 <body>
 
@@ -17,19 +21,19 @@
         <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
         <p class="auth-sub">سجّل بحسابك لمزامنة تقدمك ورصيدك</p>
         
-        <input type="text" id="auth-name" class="auth-input" placeholder="اسم اللاعب" />
-        <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني" />
-        <input type="password" id="auth-pass" class="auth-input" placeholder="كلمة المرور" />
+        <input type="text" id="auth-name" class="auth-input" placeholder="اسم اللاعب" value="saleh" />
+        <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني" value="mr.saleh.ay.94@gmail.com" />
+        <input type="password" id="auth-pass" class="auth-input" placeholder="كلمة المرور" value="123456" />
         
         <button class="btn btn-primary" onclick="handleAuthLogin()">دخول / تسجيل حساب</button>
         <button class="text-link-btn" onclick="openForgotPassModal()">نسيت كلمة المرور؟</button>
       </div>
     </section>
 
-    <!-- 2. الشاشة الرئيسية -->
-    <section id="screen-home" class="screen home-bg">
+    <!-- 2. الشاشة الرئيسية (تفتح تلقائياً) -->
+    <section id="screen-home" class="screen home-bg active">
       <div class="top-player-bar">
-        <div class="player-pill" onclick="openProfileModal()">👤 <span id="display-player-name">اللاعب</span> ⚙️</div>
+        <div class="player-pill" onclick="openProfileModal()">👤 <span id="display-player-name">saleh</span> ⚙️</div>
         <div class="stat-badge" onclick="alert('متجر الشحن قيد التجهيز للدفع الإلكتروني الرسمي')">🪙 <span id="home-coins">150</span></div>
       </div>
 
@@ -80,3 +84,42 @@
     </section>
 
     <!-- نافذة استعادة كلمة المرور -->
+    <div id="forgot-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>استعادة كلمة المرور</h3>
+          <button class="close-btn" onclick="closeModal('forgot-modal')">✕</button>
+        </div>
+        <p class="store-desc">اكتب بريدك المسجل وسيرسل لك النظام كلمة سر جديدة تلقائياً:</p>
+        <input type="email" id="reset-email-input" class="auth-input" placeholder="بريدك الإلكتروني" />
+        <button class="btn btn-primary" onclick="submitPasswordReset()">إرسال كلمة سر جديدة</button>
+      </div>
+    </div>
+
+    <!-- نافذة تعديل الحساب -->
+    <div id="profile-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>إعدادات الحساب</h3>
+          <button class="close-btn" onclick="closeModal('profile-modal')">✕</button>
+        </div>
+        <div style="text-align: right; margin-bottom: 15px;">
+          <label style="font-size: 13px; color: #64748B;">تعديل كلمة المرور:</label>
+          <input type="password" id="new-password-input" class="auth-input" placeholder="كلمة المرور الجديدة" />
+          <button class="btn btn-secondary" onclick="submitChangePassword()" style="margin-bottom: 15px;">حفظ كلمة المرور</button>
+          
+          <label style="font-size: 13px; color: #64748B;">ربط الحساب:</label>
+          <button class="btn btn-google" onclick="linkGoogleAccount()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G">
+            ربط مع حساب Google
+          </button>
+        </div>
+        <button class="btn" style="background: #E57373; color: #FFF;" onclick="logoutPlayer()">تسجيل خروج</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
