@@ -4,7 +4,7 @@ var stages = [];
 function loadStages() {
   fetch(APPS_SCRIPT_URL)
     .then(function(res) {
-      if (!res.ok) throw new Error('فشل الاتصال: ' + res.status);
+      if (!res.ok) throw new Error('فشل جلب البيانات: ' + res.status);
       return res.json();
     })
     .then(function(data) {
@@ -34,16 +34,16 @@ function loadStages() {
           });
         }
 
-        console.log('تم تحميل ' + stages.length + ' مرحلة بنجاح.');
+        console.log('نجاح: تم تحميل ' + stages.length + ' مرحلة من الشيت بنجاح.');
         if (typeof renderMapNodes === 'function') {
           renderMapNodes();
         }
       } else {
-        throw new Error('البيانات فارغة');
+        throw new Error('البيانات المستلمة فارغة');
       }
     })
     .catch(function(err) {
-      console.warn('تنبيه: تم اعتماد المراحل الاحتياطية المؤقتة:', err);
+      console.warn('تنبيه: تعذر الاتصال بالشيت، تم اعتماد المراحل الاحتياطية:', err);
       stages = [
         { id: 1, type: 'letters', icon: '✍️', reward: 5, question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا', 'ل', 'ك', 'ع', 'ب', 'ة', 'م', 'ق'] },
         { id: 2, type: 'letters', icon: '✍️', reward: 5, question: 'المدينة المقدسة التي ولد فيها النبي ﷺ', answer: 'مكة', letters: ['م', 'ك', 'ة', 'ب', 'د', 'ر', 'س', 'ع'] },
