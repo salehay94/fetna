@@ -1,13 +1,11 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyIkOXySRCaVxR8f_yy6WVQXyTHMwSsFnx1Bo4NnoCjSPKRpi84kNAXUktlILJIWok8_A/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBRgQ50Yym4IH3NFt8Y45pa2hs_6UvlsQUPE4nLPsvt8UX78KlQD1lsZOo5338YRRuKQ/exec';
 var stages = [];
 
 function loadStages() {
   fetch(APPS_SCRIPT_URL)
-    .then(function(response) {
-      if (!response.ok) {
-        throw new Error('فشل جلب البيانات: ' + response.status);
-      }
-      return response.json();
+    .then(function(res) {
+      if (!res.ok) throw new Error('فشل الاتصال: ' + res.status);
+      return res.json();
     })
     .then(function(data) {
       if (Array.isArray(data) && data.length > 0) {
@@ -15,13 +13,7 @@ function loadStages() {
         for (var i = 0; i < data.length; i++) {
           var item = data[i];
           var stageId = i + 1;
-          var rewardVal = 15;
-          
-          if (item.reward && !isNaN(item.reward)) {
-            rewardVal = Number(item.reward);
-          } else if (item['النقاط'] && !isNaN(item['النقاط'])) {
-            rewardVal = Number(item['النقاط']);
-          }
+          var rVal = Number(item.reward) || 5;
 
           var iconSymbol = '✍️';
           if (item.type === 'choices') {
@@ -35,30 +27,28 @@ function loadStages() {
             type: item.type || 'letters',
             question: item.question || '',
             answer: item.answer || '',
-            reward: rewardVal,
+            reward: rVal,
             icon: iconSymbol,
             choices: item.choices || [],
-            letters: item.letters || (item.answer ? String(item.answer).split('') : [])
+            letters: item.letters || (item.answer ? String(item.answer).replace(/[\s,،]/g, '').split('') : [])
           });
         }
 
-        console.log('نجاح: تم تحميل ' + stages.length + ' مرحلة بنجاح دون أخطاء سياسة أمان.');
+        console.log('تم تحميل ' + stages.length + ' مرحلة بنجاح.');
         if (typeof renderMapNodes === 'function') {
           renderMapNodes();
         }
       } else {
-        throw new Error('البيانات المستلمة فارغة');
+        throw new Error('البيانات فارغة');
       }
     })
-    .catch(function(error) {
-      console.warn('تنبيه: تعذر الاتصال بالشيت، تم تفعيل المراحل الاحتياطية:', error);
+    .catch(function(err) {
+      console.warn('تنبيه: تم اعتماد المراحل الاحتياطية المؤقتة:', err);
       stages = [
-        { id: 1, type: 'letters', icon: '✍️', reward: 20, question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا', 'ل', 'ك', 'ع', 'ب', 'ة', 'م', 'ق'] },
-        { id: 2, type: 'letters', icon: '✍️', reward: 25, question: 'المدينة المقدسة التي ولد فيها النبي عليه الصلاة والسلام', answer: 'مكة', letters: ['م', 'ك', 'ة', 'ب', 'د', 'ر', 'س', 'ع'] },
-        { id: 3, type: 'tf', icon: '⚖️', reward: 30, question: 'فرضت الصلاة على المسلمين في رحلة الإسراء والمعراج.', answer: 'صح' },
-        { id: 4, type: 'choices', icon: '🔠', reward: 20, question: 'كم عدد سور القرآن الكريم؟', answer: '114 سورة', choices: ['110 سورة', '112 سورة', '114 سورة', '120 سورة'] },
-        { id: 5, type: 'choices', icon: '🔠', reward: 25, question: 'في أي عام هجري وقعت غزوة بدر الكبرى؟', answer: '2 هـ', choices: ['1 هـ', '2 هـ', '3 هـ', '5 هـ'] },
-        { id: 6, type: 'tf', icon: '⚖️', reward: 30, question: 'سورة الفاتحة هي أطول سورة في القرآن الكريم.', answer: 'خطأ' }
+        { id: 1, type: 'letters', icon: '✍️', reward: 5, question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا', 'ل', 'ك', 'ع', 'ب', 'ة', 'م', 'ق'] },
+        { id: 2, type: 'letters', icon: '✍️', reward: 5, question: 'المدينة المقدسة التي ولد فيها النبي ﷺ', answer: 'مكة', letters: ['م', 'ك', 'ة', 'ب', 'د', 'ر', 'س', 'ع'] },
+        { id: 3, type: 'choices', icon: '🔠', reward: 5, question: 'كم عدد سور القرآن الكريم؟', answer: '114 سورة', choices: ['110 سورة', '112 سورة', '114 سورة', '120 سورة'] },
+        { id: 4, type: 'tf', icon: '⚖️', reward: 5, question: 'فرضت الصلاة في رحلة الإسراء والمعراج', answer: 'صح' }
       ];
       if (typeof renderMapNodes === 'function') {
         renderMapNodes();
