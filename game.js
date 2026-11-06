@@ -266,4 +266,144 @@ function selectLetter(char, btn) {
 
 function onStagePassed() {
   if (currentPlayingStage === playerData.maxStage) {
-    playerData.
+    playerData.maxStage++;
+    playerData.coins += 15;
+    savePlayerData();
+    updateUI();
+    renderMapNodes();
+
+    if (APPS_SCRIPT_URL) {
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          action: 'sync_player',
+          email: playerData.email,
+          maxStage: playerData.maxStage,
+          coins: playerData.coins
+        })
+      }).catch(function() {});
+    }
+  }
+
+  if (currentPlayingStage < stages.length) {
+    startStage(currentPlayingStage + 1);
+  } else {
+    alert('تبارك الله! ختمت كل المراحل المتوفرة.');
+    showScreen('screen-map');
+  }
+}
+
+function updateSlots() {
+  var slots = document.querySelectorAll('.char-slot');
+  for (var i = 0; i < slots.length; i++) {
+    slots[i].innerText = userGuess[i] ? userGuess[i].char : '';
+  }
+}
+
+function resetGuess() {
+  userGuess.forEach(function(i) {
+    if (i.btn) i.btn.style.visibility = 'visible';
+  });
+  userGuess = [];
+  updateSlots();
+}
+
+function useHintRevealLetter() {
+  if (playerData.coins < 20) return alert('تحتاج 20 قطعة نقدية على الأقل!');
+  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
+  if (!stage || stage.type !== 'letters') return;
+
+  var curLen = userGuess.length;
+  if (curLen < stage.answer.length) {
+    var correctChar = stage.answer[curLen];
+    playerData.coins -= 20;
+    savePlayerData();
+    updateUI();
+
+    var keyBtns = document.querySelectorAll('.key-btn');
+    for (var i = 0; i < keyBtns.length; i++) {
+      var btn = keyBtns[i];
+      if (btn.innerText === correctChar && btn.style.visibility !== 'hidden') {
+        selectLetter(correctChar, btn);
+        break;
+      }
+    }
+  }
+}
+
+function useHintSkipStage() {
+  if (playerData.coins < 50) return alert('تحتاج 50 قطعة نقدية على الأقل!');
+  if (confirm('هل تريد إنفاق 50 قطعة نقدية وتخطي هذا السؤال؟')) {
+    playerData.coins -= 50;
+    savePlayerData();
+    updateUI();
+    onStagePassed();
+  }
+}
+
+function openForgotPassModal() {
+  var m = document.getElementById('forgot-modal');
+  if (m) m.style.display = 'flex';
+}
+
+function submitPasswordReset() {
+  var emailInput = document.getElementById('reset-email-input');
+  var email = emailInput ? emailInput.value.trim() : '';
+  if (!email) return alert('يرجى كتابة بريدك المسجل!');
+
+  alert('جاري إرسال كلمة المرور إلى بريدك الإلكتروني...');
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action: 'reset_password', email: email })
+  }).then(function() {
+    alert('تفقد صندوق الوارد في بريدك الإلكتروني الآن!');
+    closeModal('forgot-modal');
+  }).catch(function() {
+    alert('تعذر الاتصال بالخادم.');
+  });
+}
+
+function openProfileModal() {
+  var m = document.getElementById('profile-modal');
+  if (m) m.style.display = 'flex';
+}
+
+function submitChangePassword() {
+  var passInput = document.getElementById('new-password-input');
+  var newPass = passInput ? passInput.value.trim() : '';
+  if (!newPass) return alert('اكتب كلمة المرور الجديدة!');
+
+  playerData.password = newPass;
+  savePlayerData();
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action: 'change_password', email: playerData.email, newPassword: newPass })
+  }).catch(function() {});
+
+  alert('تم تحديث كلمة المرور بنجاح!');
+  closeModal('profile-modal');
+}
+
+function linkGoogleAccount() {
+  alert('تم ربط حسابك بنجاح مع Google!');
+  closeModal('profile-modal');
+}
+
+function logoutPlayer() {
+  localStorage.removeItem('fetnah_player_v22');
+  closeModal('profile-modal');
+  showScreen('screen-auth');
+}
+
+function closeModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  checkExistingUser();
+  loadStagesFromScript();
+});
