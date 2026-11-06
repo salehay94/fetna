@@ -3,6 +3,11 @@ var userGuess = [];
 var isCrosswordSecondWord = false;
 var nextActionCallback = null;
 
+// حالة الكلمات المتقاطعة
+var cwHorizontalGuess = [];
+var cwVerticalGuess = [];
+var cwActiveWord = 'H'; // 'H' للأفقي و 'V' للعمودي
+
 var praisePhrases = [
   'ما شاء الله!',
   'تبارك الرحمن!',
@@ -90,7 +95,9 @@ function startStage(stageNum) {
   var stage = stages.find(function(s) { return s.id === stageNum; }) || stages[0];
   currentPlayingStage = stage.id;
   userGuess = [];
-  isCrosswordSecondWord = false;
+  cwHorizontalGuess = [];
+  cwVerticalGuess = [];
+  cwActiveWord = 'H';
 
   var titleEl = document.getElementById('stage-title');
   var qTextEl = document.getElementById('question-text');
@@ -113,8 +120,7 @@ function startStage(stageNum) {
     if (lettersArea) lettersArea.style.display = 'block';
     if (choiceArea) choiceArea.style.display = 'none';
     if (hintBtn) hintBtn.style.display = 'inline-block';
-    renderAnswerSlots(stage.answer.length);
-    renderKeyboard(stage.letters);
+    setupCrosswordGame(stage);
   } else {
     if (typeBadge) typeBadge.innerText = 'تجميع حروف';
     if (lettersArea) lettersArea.style.display = 'block';
@@ -127,6 +133,174 @@ function startStage(stageNum) {
   showScreen('screen-game');
 }
 
+/* =========================================
+   نظام الكلمات المتقاطعة الشبكي
+========================================= */
+function setupCrosswordGame(stage) {
+  var answerBoxes = document.getElementById('answer-boxes');
+  if (!answerBoxes) return;
+
+  var hWord = stage.answer;      // أفقي
+  var vWord = stage.crossAnswer; // عمودي
+  var intersectChar = stage.intersect || 'ت';
+
+  var hIdx = hWord.indexOf(intersectChar);
+  var vIdx = vWord.indexOf(intersectChar);
+  if (hIdx === -1) hIdx = 0;
+  if (vIdx === -1) vIdx = 0;
+
+  var cols = hWord.length;
+  var rows = vWord.length;
+
+  var html = '';
+  html += '<div class="cross-indicator-bar">';
+  html += '  <span id="pill-h" class="cross-pill active">أفقي (' + hWord.length + ' أحرف)</span>';
+  html += '  <span id="pill-v" class="cross-pill">عمودي (' + vWord.length + ' أحرف)</span>';
+  html += '</div>';
+
+  html += '<div class="crossword-container">';
+  html += '  <div class="crossword-grid" style="grid-template-columns: repeat(' + cols + ', 42px); grid-template-rows: repeat(' + rows + ', 42px);">';
+
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var isH = (r === vIdx);
+      var isV = (c === hIdx);
+
+      if (isH && isV) {
+        html += '<div class="cross-cell intersect" id="cell-' + r + '-' + c + '"></div>';
+      } else if (isH) {
+        html += '<div class="cross-cell" id="cell-' + r + '-' + c + '"></div>';
+      } else if (isV) {
+        html += '<div class="cross-cell" id="cell-' + r + '-' + c + '"></div>';
+      } else {
+        html += '<div class="cross-cell empty"></div>';
+      }
+    }
+  }
+
+  html += '  </div>';
+  html += '</div>';
+
+  answerBoxes.innerHTML = html;
+  renderKeyboard(stage.letters);
+}
+
+function selectLetterCrossword(char, btn) {
+  var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
+  if (!stage) return;
+
+  var hWord = stage.answer;
+  var vWord = stage.crossAnswer;
+  var hIdx = hWord.indexOf(stage.intersect || 'ت');
+  var vIdx = vWord.indexOf(stage.intersect || 'ت');
+  if (hIdx === -1) hIdx = 0;
+  if (vIdx === -1) vIdx = 0;
+
+  if (cwActiveWord === 'H') {
+    if (cwHorizontalGuess.length >= hWord.length) return;
+    cwHorizontalGuess.push({ char: char, btn: btn });
+    btn.style.visibility = 'hidden';
+
+    var c = cwHorizontalGuess.length - 1;
+    var cell = document.getElementById('cell-' + vIdx + '-' + c);
+    if (cell) {
+      cell.innerText = char;
+      cell.classList.add('filled');
+    }
+
+    if (cwHorizontalGuess.length === hWord.length) {
+      var fullH = cwHorizontalGuess.map(function(i){ return i.char; }).join('');
+      if (fullH === hWord) {
+        showGameAlert(true, 'أحسنت!', 'حللت الكلمة الأفقية بنجاح! الآن جمّع الكلمة العمودية', 'متابعة ⏩', function() {
+          cwActiveWord = 'V';
+          document.getElementById('pill-h').classList.remove('active');
+          document.getElementById('pill-v').classList.add('active');
+
+          // إظهار الحروف مرة أخرى للعمودي ما عدا الحرف المشترك
+          var keys = document.querySelectorAll('.key-btn');
+          keys.forEach(function(k) { k.style.visibility = 'visible'; });
+
+          // تثبيت الحرف المشترك تلقائياً في العمودي
+          cwVerticalGuess = [];
+          for (var r = 0; r < vWord.length; r++) {
+            if (r === vIdx) {
+              cwVerticalGuess.push({ char: stage.intersect, auto: true });
+            }
+          }
+        });
+      } else {
+        showGameAlert(false, 'الكلمة الأفقية غير صحيحة', 'حاول ترتيب الحروف بشكل سليم', 'إعادة المحاولة', function() {
+          resetCrosswordGuess('H', vIdx, hWord.length);
+        });
+      }
+    }
+  } else {
+    // حل العمودي
+    if (cwVerticalGuess.length >= vWord.length) return;
+
+    var curRow = cwVerticalGuess.length;
+    if (curRow === vIdx) {
+      // خانة التقاطع مملوءة مسبقاً
+      curRow++;
+    }
+
+    cwVerticalGuess.push({ char: char, btn: btn });
+    btn.style.visibility = 'hidden';
+
+    var cellV = document.getElementById('cell-' + (cwVerticalGuess.length - 1) + '-' + hIdx);
+    if (cellV) {
+      cellV.innerText = char;
+      cellV.classList.add('filled');
+    }
+
+    if (cwVerticalGuess.length === vWord.length) {
+      var fullV = cwVerticalGuess.map(function(i){ return i.char; }).join('');
+      if (fullV === vWord) {
+        var reward = getCurrentStageReward();
+        showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
+          onStagePassed();
+        });
+      } else {
+        showGameAlert(false, 'الكلمة العمودية غير صحيحة', 'ركز وحاول مجدداً', 'إعادة المحاولة', function() {
+          resetCrosswordGuess('V', hIdx, vWord.length, vIdx);
+        });
+      }
+    }
+  }
+}
+
+function resetCrosswordGuess(type, fixedPos, len, skipIdx) {
+  if (type === 'H') {
+    cwHorizontalGuess.forEach(function(i) {
+      if (i.btn) i.btn.style.visibility = 'visible';
+    });
+    cwHorizontalGuess = [];
+    for (var c = 0; c < len; c++) {
+      var cell = document.getElementById('cell-' + fixedPos + '-' + c);
+      if (cell) {
+        cell.innerText = '';
+        cell.classList.remove('filled');
+      }
+    }
+  } else {
+    cwVerticalGuess.forEach(function(i) {
+      if (i.btn) i.btn.style.visibility = 'visible';
+    });
+    cwVerticalGuess = [];
+    for (var r = 0; r < len; r++) {
+      if (r === skipIdx) continue;
+      var cellV = document.getElementById('cell-' + r + '-' + fixedPos);
+      if (cellV) {
+        cellV.innerText = '';
+        cellV.classList.remove('filled');
+      }
+    }
+  }
+}
+
+/* =========================================
+   الأنماط الأخرى (خيارات + حروف)
+========================================= */
 function renderChoices(choices, correctAnswer) {
   var container = document.getElementById('choice-mode-area');
   if (!container) return;
@@ -159,11 +333,14 @@ function renderAnswerSlots(count) {
   var container = document.getElementById('answer-boxes');
   if (!container) return;
   container.innerHTML = '';
+  var row = document.createElement('div');
+  row.className = 'answer-row';
   for (var i = 0; i < count; i++) {
     var slot = document.createElement('div');
     slot.className = 'char-slot';
-    container.appendChild(slot);
+    row.appendChild(slot);
   }
+  container.appendChild(row);
 }
 
 function renderKeyboard(letters) {
@@ -175,7 +352,14 @@ function renderKeyboard(letters) {
     var btn = document.createElement('button');
     btn.className = 'key-btn';
     btn.innerText = char;
-    btn.onclick = function() { selectLetter(char, btn); };
+    btn.onclick = function() {
+      var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
+      if (stage && stage.type === 'crossword') {
+        selectLetterCrossword(char, btn);
+      } else {
+        selectLetter(char, btn);
+      }
+    };
     container.appendChild(btn);
   });
 }
@@ -184,7 +368,7 @@ function selectLetter(char, btn) {
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage) return;
 
-  var targetAnswer = (stage.type === 'crossword' && isCrosswordSecondWord) ? stage.crossAnswer : stage.answer;
+  var targetAnswer = stage.answer;
   var reward = getCurrentStageReward();
 
   if (userGuess.length >= targetAnswer.length) return;
@@ -195,21 +379,10 @@ function selectLetter(char, btn) {
 
   if (userGuess.length === targetAnswer.length) {
     var word = userGuess.map(function(i) { return i.char; }).join('');
-    
     if (word === targetAnswer) {
-      if (stage.type === 'crossword' && !isCrosswordSecondWord) {
-        showGameAlert(true, 'أحسنت!', 'الكلمة الأولى صحيحة، الآن جمّع الكلمة المتقاطعة الثانية', 'متابعة ⏩', function() {
-          isCrosswordSecondWord = true;
-          userGuess = [];
-          renderAnswerSlots(stage.crossAnswer.length);
-          var keys = document.querySelectorAll('.key-btn');
-          keys.forEach(function(k) { k.style.visibility = 'visible'; });
-        });
-      } else {
-        showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
-          onStagePassed();
-        });
-      }
+      showGameAlert(true, '', '+' + reward + ' نقطة تمت إضافتها لرصيدك', 'المرحلة التالية ⏩', function() {
+        onStagePassed();
+      });
     } else {
       showGameAlert(false, 'الكلمة غير صحيحة', 'حاول ترتيب الحروف بالشكل السليم', 'إعادة المحاولة 🔄', function() {
         resetGuess();
@@ -268,17 +441,15 @@ function resetGuess() {
 
 function useHintRevealLetter() {
   if (playerData.coins < 20) {
-    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 20 🪙 على الأقل لاستخدام التلميح', 'حسناً');
+    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 20 نقطة على الأقل لاستخدام التلميح', 'حسناً');
     return;
   }
   var stage = stages.find(function(s) { return s.id === currentPlayingStage; });
   if (!stage || stage.type === 'choices') return;
 
-  var targetAnswer = (stage.type === 'crossword' && isCrosswordSecondWord) ? stage.crossAnswer : stage.answer;
   var curLen = userGuess.length;
-
-  if (curLen < targetAnswer.length) {
-    var correctChar = targetAnswer[curLen];
+  if (curLen < stage.answer.length) {
+    var correctChar = stage.answer[curLen];
     playerData.coins -= 20;
     savePlayerData();
     updateUI();
@@ -296,7 +467,7 @@ function useHintRevealLetter() {
 
 function useHintSkipStage() {
   if (playerData.coins < 50) {
-    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 50 🪙 لتخطي هذا السؤال', 'حسناً');
+    showGameAlert(false, 'الرصيد غير كافٍ', 'تحتاج إلى 50 نقطة لتخطي هذا السؤال', 'حسناً');
     return;
   }
   playerData.coins -= 50;
