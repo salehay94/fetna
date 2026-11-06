@@ -7,7 +7,7 @@
 }
 
 body {
-  background-color: #CBD5E1;
+  background-color: #2F3640;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -22,19 +22,19 @@ body {
   background-color: #F8FAF7;
   border-radius: 28px;
   overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
   position: relative;
   border: 2px solid #D2E3C8;
   display: flex;
   flex-direction: column;
 }
 
-/* عزل تام للشاشات لمنع أي تراكب */
 .screen {
   display: none !important;
   width: 100%;
   height: 100%;
   flex-direction: column;
+  position: relative;
 }
 
 .screen.active {
@@ -108,7 +108,7 @@ body {
   border: 2px solid #D2E3C8;
 }
 
-/* شاشة خريطة المراحل */
+/* شاشة خريطة المراحل ومسار المحراب */
 .game-header {
   display: flex;
   justify-content: space-between;
@@ -141,9 +141,11 @@ body {
   align-items: center;
   gap: 24px;
   padding: 40px 25px;
+  background-color: #E2ECE9;
   background-image: url('bg-map.jpg');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   overflow-y: auto;
 }
 
@@ -157,13 +159,13 @@ body {
   font-size: 20px;
   font-weight: 900;
   cursor: pointer;
-  border: 3px solid #D2E3C8;
+  border: 3px solid #FFFFFF;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
 }
 
 .stage-node.completed {
-  background: #70B286;
+  background: #2E7D32;
   color: #FFFFFF;
 }
 
@@ -174,31 +176,26 @@ body {
   right: -4px;
   background: #1B5E20;
   color: #FFFFFF;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid #FFFFFF;
 }
 
 .stage-node.current {
   background: #F3C969;
   color: #2C3E50;
-  border-color: #E8B86D;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  border-color: #FFFFFF;
+  box-shadow: 0 0 15px rgba(243, 201, 105, 0.9);
 }
 
 .stage-node.locked {
-  background: #E2E8F0;
-  color: #94A3B8;
+  background: rgba(226, 232, 240, 0.85);
+  color: #64748B;
   cursor: not-allowed;
   border-color: #CBD5E1;
 }
@@ -207,13 +204,14 @@ body {
 .question-card {
   background: #FFFFFF;
   margin: 15px 20px;
-  padding: 16px;
+  padding: 18px;
   border-radius: 18px;
   border: 2px solid #D2E3C8;
   text-align: center;
   font-size: 18px;
   font-weight: 900;
   color: #2C3E50;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
 }
 
 .type-pill {
@@ -294,7 +292,7 @@ body {
   cursor: pointer;
 }
 
-/* خيارات نمط 4 خيارات */
+/* نمط 4 خيارات */
 .choices-container {
   display: flex;
   flex-direction: column;
@@ -316,22 +314,35 @@ body {
   transition: all 0.2s;
 }
 
-.choice-btn:active {
-  background: #E8F5E9;
-  border-color: #70B286;
-}
-
 .choice-btn.correct {
-  background: #70B286 !important;
+  background: #2E7D32 !important;
   color: #FFFFFF !important;
+  border-color: #1B5E20 !important;
 }
 
 .choice-btn.wrong {
-  background: #E57373 !important;
+  background: #D32F2F !important;
   color: #FFFFFF !important;
+  border-color: #B71C1C !important;
 }
 
-/* النوافذ المنبثقة */
+/* شريط التنبيه الداخلي للنجاح بدلاً من alert */
+.success-banner {
+  display: none;
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2E7D32;
+  color: #FFFFFF;
+  padding: 14px 28px;
+  border-radius: 20px;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 100;
+}
+
 .modal-overlay {
   display: none;
   position: absolute;
