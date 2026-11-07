@@ -5,7 +5,7 @@ var playerData = {
   phone: '',
   maxStage: 1,
   coins: 100,
-  hearts: 3,
+  hearts: 5, // تحديث سعة القلوب لـ 5 قلوب
   lastHeartTime: null,
   soundEnabled: true
 };
@@ -53,9 +53,9 @@ function showScreen(screenId) {
   }
 }
 
-// ================= استعادة القلوب والعداد التنازلي =================
+// ================= استعادة القلوب والعداد التنازلي (حتى 5 قلوب) =================
 function checkHeartsRecovery() {
-  if (playerData.hearts < 3) {
+  if (playerData.hearts < 5) { // تم تغيير الحد الأقصى إلى 5
     var now = Date.now();
     if (!playerData.lastHeartTime) {
       playerData.lastHeartTime = now;
@@ -64,8 +64,8 @@ function checkHeartsRecovery() {
     var elapsed = now - playerData.lastHeartTime;
     if (elapsed >= HEART_RECOVERY_TIME) {
       var recovered = Math.floor(elapsed / HEART_RECOVERY_TIME);
-      playerData.hearts = Math.min(3, playerData.hearts + recovered);
-      if (playerData.hearts >= 3) {
+      playerData.hearts = Math.min(5, playerData.hearts + recovered); // تم تغيير الحد الأقصى إلى 5
+      if (playerData.hearts >= 5) {
         playerData.lastHeartTime = null;
       } else {
         playerData.lastHeartTime = playerData.lastHeartTime + (recovered * HEART_RECOVERY_TIME);
@@ -82,7 +82,7 @@ function updateHeartTimerDisplay() {
   var timerEl = document.getElementById('heart-timer');
   if (!timerEl) return;
 
-  if (playerData.hearts < 3 && playerData.lastHeartTime) {
+  if (playerData.hearts < 5 && playerData.lastHeartTime) { // تم تغيير الحد الأقصى إلى 5
     var now = Date.now();
     var elapsed = now - playerData.lastHeartTime;
     var timeLeft = HEART_RECOVERY_TIME - elapsed;
@@ -117,7 +117,7 @@ function checkExistingUser() {
         playerData.phone = loaded.phone || '';
         playerData.maxStage = loaded.maxStage || 1;
         playerData.coins = loaded.coins || 100;
-        playerData.hearts = loaded.hearts !== undefined ? loaded.hearts : 3;
+        playerData.hearts = loaded.hearts !== undefined ? loaded.hearts : 5; // الافتراضي 5 قلوب
         playerData.lastHeartTime = loaded.lastHeartTime || null;
         playerData.soundEnabled = loaded.soundEnabled !== undefined ? loaded.soundEnabled : true;
 
@@ -179,7 +179,7 @@ function handleAuthLogin() {
       } else {
         playerData.maxStage = 1;
         playerData.coins = 100;
-        playerData.hearts = 3;
+        playerData.hearts = 5; // الافتراضي 5 قلوب
         pushPlayerDataToSheet();
       }
       savePlayerData();
@@ -229,7 +229,7 @@ function updateUI() {
   var heartIds = ['home-hearts', 'map-hearts', 'game-hearts'];
   for (var h = 0; h < heartIds.length; h++) {
     var hEl = document.getElementById(heartIds[h]);
-    if (hEl) hEl.innerText = playerData.hearts !== undefined ? playerData.hearts : 3;
+    if (hEl) hEl.innerText = playerData.hearts !== undefined ? playerData.hearts : 5; // الافتراضي 5 قلوب
   }
 
   var soundOn = document.getElementById('sound-icon-on');
@@ -273,6 +273,7 @@ function openHeartsShopModal() {
   openModal('hearts-shop-modal');
 }
 
+// شحن القلوب (الحد الأقصى 5، مع التسعيرة الجديدة 20 و80)
 function buyHearts(amount, cost) {
   if (playerData.coins < cost) {
     playSound('empty');
@@ -282,8 +283,8 @@ function buyHearts(amount, cost) {
   
   playSound('correct');
   playerData.coins -= cost;
-  playerData.hearts = Math.min(3, playerData.hearts + amount);
-  if (playerData.hearts >= 3) playerData.lastHeartTime = null;
+  playerData.hearts = Math.min(5, playerData.hearts + amount); // تم تعديل السعة لـ 5 قلوب
+  if (playerData.hearts >= 5) playerData.lastHeartTime = null; // تم تعديل السعة لـ 5 قلوب
   
   savePlayerData();
   updateUI();
@@ -342,7 +343,7 @@ function closeModal(id) {
 
 function logoutPlayer() {
   localStorage.removeItem('fetnah_user_phone_session');
-  playerData = { name: '', phone: '', maxStage: 1, coins: 100, hearts: 3, lastHeartTime: null, soundEnabled: true };
+  playerData = { name: '', phone: '', maxStage: 1, coins: 100, hearts: 5, lastHeartTime: null, soundEnabled: true }; // الافتراضي 5 قلوب
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
