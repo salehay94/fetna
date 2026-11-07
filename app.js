@@ -6,44 +6,123 @@ var playerData = {
   maxStage: 1,
   coins: 100,
   hearts: 3,
-  lastHeartTime: null
+  lastHeartTime: null,
+  soundEnabled: true
 };
 
-var HEART_RECOVERY_TIME = 15 * 60 * 1000; // 15 دقيقة بالملي ثانية
+var HEART_RECOVERY_TIME = 15 * 60 * 1000;
 
+// ================= نظام المؤثرات الصوتية (Web Audio API) =================
+var audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) audioCtx = new AudioContext();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playSound(type) {
+  if (!playerData.soundEnabled) return;
+  try {
+    var ctx = getAudioContext();
+    if (!ctx) return;
+
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    var now = ctx.currentTime;
+
+    if (type === 'correct') {
+      // نغمة فوز مبهجة ومتصاعدة
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, now); // A4
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.35);
+
+    } else if (type === 'wrong') {
+      // نغمة إجابة خاطئة منخفضة
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.linearRampToValueAtTime(130, now + 0.25);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+
+    } else if (type === 'empty') {
+      // نغمة نفاذ الرصيد أو القلوب
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.setValueAtTime(200, now + 0.1);
+      osc.frequency.setValueAtTime(150, now + 0.2);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.4);
+
+    } else if (type === 'click') {
+      // صوت نقرة خفيفة عند كشف حرف أو ضغط زر
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    }
+  } catch (e) {
+    console.warn('Audio API error:', e);
+  }
+}
+
+// تبديل تفعيل أو كتم الصوت
+function toggleSound() {
+  playerData.soundEnabled = !playerData.soundEnabled;
+  savePlayerData();
+  updateUI();
+  if (playerData.soundEnabled) playSound('click');
+}
+
+// ================= إدارة الشاشات والتنقل =================
 function showScreen(screenId) {
   var screens = document.querySelectorAll('.screen');
   for (var i = 0; i < screens.length; i++) {
     screens[i].classList.remove('active');
+    screens[i].style.setProperty('display', 'none', 'important');
   }
   var target = document.getElementById(screenId);
   if (target) {
     target.classList.add('active');
+    target.style.setProperty('display', 'flex', 'important');
   }
 }
 
-// فحص واستعادة القلوب بدقة بالاعتماد على تاريخ وقت حفظ حقيقي في المتصفح
+// استعادة القلوب والمؤقت
 function checkHeartsRecovery() {
   if (playerData.hearts < 3) {
     var now = Date.now();
-    
     if (!playerData.lastHeartTime) {
       playerData.lastHeartTime = now;
       savePlayerData();
     }
-
     var elapsed = now - playerData.lastHeartTime;
-
     if (elapsed >= HEART_RECOVERY_TIME) {
       var recovered = Math.floor(elapsed / HEART_RECOVERY_TIME);
       playerData.hearts = Math.min(3, playerData.hearts + recovered);
-      
       if (playerData.hearts >= 3) {
         playerData.lastHeartTime = null;
       } else {
         playerData.lastHeartTime = playerData.lastHeartTime + (recovered * HEART_RECOVERY_TIME);
       }
-      
       savePlayerData();
       updateUI();
     }
@@ -52,7 +131,6 @@ function checkHeartsRecovery() {
   }
 }
 
-// تحديث وعرض العداد التنازلي للقلوب لحظة بلحظة
 function updateHeartTimerDisplay() {
   var timerEl = document.getElementById('heart-timer');
   if (!timerEl) return;
@@ -65,10 +143,8 @@ function updateHeartTimerDisplay() {
     if (timeLeft > 0) {
       var minutes = Math.floor(timeLeft / 60000);
       var seconds = Math.floor((timeLeft % 60000) / 1000);
-      
       var strMin = minutes < 10 ? '0' + minutes : minutes;
       var strSec = seconds < 10 ? '0' + seconds : seconds;
-      
       timerEl.innerText = '(' + strMin + ':' + strSec + ' ⏳)';
     } else {
       timerEl.innerText = '';
@@ -87,15 +163,16 @@ function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
     try {
-      var loadedData = JSON.parse(saved);
-      playerData.name = loadedData.name || '';
-      playerData.phone = loadedData.phone || '';
-      playerData.maxStage = loadedData.maxStage || 1;
-      playerData.coins = loadedData.coins || 100;
-      playerData.hearts = loadedData.hearts !== undefined ? loadedData.hearts : 3;
-      playerData.lastHeartTime = loadedData.lastHeartTime || null;
+      var loaded = JSON.parse(saved);
+      if (loaded && loaded.phone) {
+        playerData.name = loaded.name || '';
+        playerData.phone = loaded.phone || '';
+        playerData.maxStage = loaded.maxStage || 1;
+        playerData.coins = loaded.coins || 100;
+        playerData.hearts = loaded.hearts !== undefined ? loaded.hearts : 3;
+        playerData.lastHeartTime = loaded.lastHeartTime || null;
+        playerData.soundEnabled = loaded.soundEnabled !== undefined ? loaded.soundEnabled : true;
 
-      if (playerData && playerData.phone) {
         checkHeartsRecovery();
         updateUI();
         showScreen('screen-home');
@@ -116,7 +193,6 @@ function syncPlayerData(phone) {
         playerData.maxStage = Number(resData.maxStage) || 1;
         playerData.coins = Number(resData.coins) || 100;
         if (resData.name) playerData.name = resData.name;
-        
         savePlayerData();
         updateUI();
         if (typeof renderMapNodes === 'function') renderMapNodes();
@@ -133,7 +209,6 @@ function handleAuthLogin() {
 
   var name = nameInput ? nameInput.value.trim() : '';
   var rawPhone = phoneInput ? phoneInput.value.trim() : '';
-
   var cleanPhone = rawPhone.replace(/[^0-9]/g, '').replace(/^0+/, '');
 
   if (!name || !cleanPhone) {
@@ -141,23 +216,10 @@ function handleAuthLogin() {
     return;
   }
 
-  var saved = localStorage.getItem('fetnah_user_phone_session');
-  var existingHearts = 3;
-  var existingTime = null;
-  if (saved) {
-    try {
-      var old = JSON.parse(saved);
-      if (old.phone === cleanPhone) {
-        existingHearts = old.hearts !== undefined ? old.hearts : 3;
-        existingTime = old.lastHeartTime || null;
-      }
-    } catch (e) {}
-  }
+  playSound('click');
 
   playerData.name = name;
   playerData.phone = cleanPhone;
-  playerData.hearts = existingHearts;
-  playerData.lastHeartTime = existingTime;
 
   fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(cleanPhone))
     .then(function(res) { return res.json(); })
@@ -169,10 +231,6 @@ function handleAuthLogin() {
       } else {
         playerData.maxStage = 1;
         playerData.coins = 100;
-        if (playerData.hearts === 3) {
-          playerData.hearts = 3;
-          playerData.lastHeartTime = null;
-        }
         pushPlayerDataToSheet();
       }
       savePlayerData();
@@ -224,18 +282,24 @@ function updateUI() {
     var hEl = document.getElementById(heartIds[h]);
     if (hEl) hEl.innerText = playerData.hearts !== undefined ? playerData.hearts : 3;
   }
+
+  // تحديث أيقونة الصوت
+  var soundBtns = document.querySelectorAll('.sound-toggle-btn');
+  soundBtns.forEach(function(btn) {
+    btn.innerText = playerData.soundEnabled ? '🔊' : '🔇';
+  });
 }
 
 function openMapScreen() {
+  playSound('click');
   syncPlayerData(playerData.phone);
-  if (typeof renderMapNodes === 'function') {
-    renderMapNodes();
-  }
+  if (typeof renderMapNodes === 'function') renderMapNodes();
   showScreen('screen-map');
 }
 
 function continueCurrentStage() {
   if (playerData.hearts <= 0) {
+    playSound('empty');
     openHeartsShopModal();
     return;
   }
@@ -248,27 +312,27 @@ function continueCurrentStage() {
   if (typeof startStage === 'function') startStage(target);
 }
 
-// منبثقات من نحن وشراء القلوب
 function openAboutModal() {
+  playSound('click');
   openModal('about-modal');
 }
 
 function openHeartsShopModal() {
+  playSound('click');
   openModal('hearts-shop-modal');
 }
 
 function buyHearts(amount, cost) {
   if (playerData.coins < cost) {
+    playSound('empty');
     alert('عذراً، نقاطك غير كافية لإجراء الشراء! (المطلوب ' + cost + ' نقطة)');
     return;
   }
   
+  playSound('correct');
   playerData.coins -= cost;
   playerData.hearts = Math.min(3, playerData.hearts + amount);
-  
-  if (playerData.hearts >= 3) {
-    playerData.lastHeartTime = null;
-  }
+  if (playerData.hearts >= 3) playerData.lastHeartTime = null;
   
   savePlayerData();
   updateUI();
@@ -288,8 +352,8 @@ function closeModal(id) {
 }
 
 function logoutPlayer() {
-  var saved = localStorage.getItem('fetnah_user_phone_session');
-  playerData = { name: '', phone: '', maxStage: 1, coins: 100, hearts: 3, lastHeartTime: null };
+  localStorage.removeItem('fetnah_user_phone_session');
+  playerData = { name: '', phone: '', maxStage: 1, coins: 100, hearts: 3, lastHeartTime: null, soundEnabled: true };
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
