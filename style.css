@@ -104,7 +104,7 @@ body {
 
 /* 2. الشاشة الرئيسية واللافتة */
 .home-bg {
-  background: #f0fdf4 url('background.png') no-repeat center center;
+background: #f0fdf4 url('bg.jpg') no-repeat center center;
   background-size: cover;
   display: flex;
   flex-direction: column;
