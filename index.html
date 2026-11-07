@@ -11,8 +11,99 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1b4d3e">
 
-  <link rel="stylesheet" href="style.css?v=88000">
+  <link rel="stylesheet" href="style.css?v=110000">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    #screen-home {
+      background: #f7fafc url('bg.jpg') no-repeat center center !important;
+      background-size: cover !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .top-player-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(5px);
+    }
+
+    .player-pill, .hearts-pill, .stat-badge, .icon-btn {
+      background: #ffffff !important;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .icon-btn {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      font-size: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid #E2E8F0;
+    }
+
+    .notif-badge-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background-color: #E53E3E;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .overlay-content {
+      padding: 16px 20px 24px 20px;
+      background: linear-gradient(0deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 100%);
+    }
+
+    #heart-timer {
+      font-size: 11px;
+      color: #718096;
+      font-weight: bold;
+      margin-right: 4px;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .notif-card-item {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      text-align: right;
+    }
+    .notif-card-item h4 {
+      font-size: 14px;
+      color: #1b4d3e;
+      margin-bottom: 4px;
+      font-weight: 900;
+    }
+    .notif-card-item p {
+      font-size: 13px;
+      color: #4a5568;
+      line-height: 1.4;
+    }
+    .notif-time {
+      font-size: 11px;
+      color: #a0aec0;
+      display: block;
+      margin-top: 5px;
+    }
+  </style>
 </head>
 <body>
 
@@ -67,12 +158,12 @@
             </svg>
           </button>
 
-          <!-- شارة القلوب -->
+          <!-- شارة القلوب (سعة 5) -->
           <button class="glass-pill hearts-pill" onclick="openHeartsShopModal()">
             <svg class="nav-svg heart-svg" viewBox="0 0 24 24" fill="#e53e3e" stroke="#e53e3e" stroke-width="1.5">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
-            <span id="home-hearts">3</span>
+            <span id="home-hearts">5</span>/5
             <span id="heart-timer"></span>
           </button>
 
@@ -88,7 +179,6 @@
       </div>
 
       <div class="overlay-content">
-        <!-- تم تفريغ النص البرمجي لأن الآية أصبحت ثابتة ومطبوعة داخل صورة الخلفية -->
         <div class="banner-spacer"></div>
 
         <div class="action-buttons">
@@ -111,7 +201,7 @@
         <div class="header-right-stats">
           <button class="glass-pill hearts-pill" onclick="openHeartsShopModal()">
             <svg class="nav-svg heart-svg" viewBox="0 0 24 24" fill="#e53e3e" stroke="#e53e3e"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            <span id="map-hearts">3</span>
+            <span id="map-hearts">5</span>
           </button>
           <div class="glass-pill coins-pill">
             <svg class="nav-svg coin-svg" viewBox="0 0 24 24" fill="#d97706" stroke="#b45309"><circle cx="12" cy="12" r="9"></circle></svg>
@@ -130,7 +220,7 @@
         <div class="header-right-stats">
           <button class="glass-pill hearts-pill" onclick="openHeartsShopModal()">
             <svg class="nav-svg heart-svg" viewBox="0 0 24 24" fill="#e53e3e" stroke="#e53e3e"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            <span id="game-hearts">3</span>
+            <span id="game-hearts">5</span>
           </button>
           <div class="glass-pill coins-pill">
             <svg class="nav-svg coin-svg" viewBox="0 0 24 24" fill="#d97706" stroke="#b45309"><circle cx="12" cy="12" r="9"></circle></svg>
@@ -195,7 +285,7 @@
       </div>
     </div>
 
-    <!-- 6. منبثقة شحن القلوب -->
+    <!-- 6. منبثقة شحن القلوب (سعة 5 والتسعيرة الجديدة) -->
     <div id="hearts-shop-modal" class="modal-overlay">
       <div class="modal-card modal-hearts">
         <div class="modal-header">
@@ -205,11 +295,11 @@
         <p class="store-desc" style="text-align: center; margin-bottom: 20px;">احصل على قلوب إضافية الآن لمواصلة اللعب دون انتظار!</p>
         
         <div class="shop-buttons-wrap">
-          <button class="btn btn-shop-heart" onclick="buyHearts(1, 50)">
-            ❤️ شراء قلب واحد (50 نقطة)
+          <button class="btn btn-shop-heart" onclick="buyHearts(1, 20)">
+            ❤️ شراء قلب واحد (20 نقطة)
           </button>
-          <button class="btn btn-shop-bundle" onclick="buyHearts(3, 120)">
-            ❤️❤️❤️ شحن كامل (120 نقطة)
+          <button class="btn btn-shop-bundle" onclick="buyHearts(5, 80)">
+            ❤️❤️❤️❤️❤️ شحن كامل (80 نقطة)
           </button>
         </div>
         <button class="btn btn-secondary" onclick="closeModal('hearts-shop-modal')">إغلاق</button>
@@ -237,7 +327,7 @@
           <a href="https://instagram.com/LISTEN.091" target="_blank" class="btn btn-instagram">[cite: 12]
             📸 تابعنا على إنستغرام (@LISTEN.091)[cite: 12]
           </a>
-          <a href="https://wa.me/963932001377?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%20%D9%81%D8%B1%D9%8A%D9%82%20%D9%81%D9%90%D8%B7%D9%86%D8%A9%D8%8C%20%D9%84%D8%AF%D9%8A%20%D9%85%D9%82%D8%AA%D8%B1%D8%AD%20%D8%A3%D9%88%20%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%AD%D9%88%D9%84%20%D8%A7%D9%84%D9%84%D8%B9%D8%A8%D8%A9..." target="_blank" class="btn btn-whatsapp">
+          <a href="https://wa.me/963932001377?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%20%D9%81%D8%B1%D9%82%20%D9%81%D9%90%D8%B7%D9%86%D8%A9%D8%8C%20%D9%84%D8%AF%D9%8A%20%D9%85%D9%82%D8%AA%D8%B1%D8%AD%20%D8%AA%D8%B7%D9%88%D9%8A%D8%B1..." target="_blank" class="btn btn-whatsapp">
             💬 تواصل معنا واقترح تطوير (واتساب)
           </a>
         </div>
@@ -261,10 +351,10 @@
 
   </div>
 
-  <script src="app.js?v=88000"></script>
-  <script src="stages_data.js?v=88000"></script>
-  <script src="map.js?v=88000"></script>
-  <script src="quiz.js?v=88000"></script>
+  <script src="app.js?v=110000"></script>
+  <script src="stages_data.js?v=110000"></script>
+  <script src="map.js?v=110000"></script>
+  <script src="quiz.js?v=110000"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
