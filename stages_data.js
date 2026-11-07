@@ -1,4 +1,4 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwMEoUfoM0GKY7PHlVXZCWMmROBM5s-geLgxnw5Lsq8edlAFatZBM6DUN1qXg6_Stcog/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIEGfaGfm-3OSsxmgKX3C8ho4hsf_eN2c78G2TcQ8bs5QGOzJzsnzssor49ADvwDc9Ng/exec';
 var stages = [];
 
 function loadStages() {
