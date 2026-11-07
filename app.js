@@ -10,81 +10,30 @@ var playerData = {
   soundEnabled: true
 };
 
-var HEART_RECOVERY_TIME = 15 * 60 * 1000;
+var HEART_RECOVERY_TIME = 15 * 60 * 1000; // 15 دقيقة لكل قلب
 
-// ================= نظام المؤثرات الصوتية (Web Audio API) =================
-var audioCtx = null;
-
-function getAudioContext() {
-  if (!audioCtx) {
-    var AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) audioCtx = new AudioContext();
-  }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  return audioCtx;
-}
+// ================= نظام المؤثرات الصوتية الحقيقية (MP3 عالية النقاء) =================
+var SOUND_EFFECTS = {
+  correct: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+  wrong: new Audio('https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3'),
+  click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+  empty: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3')
+};
 
 function playSound(type) {
   if (!playerData.soundEnabled) return;
   try {
-    var ctx = getAudioContext();
-    if (!ctx) return;
-
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    var now = ctx.currentTime;
-
-    if (type === 'correct') {
-      // نغمة فوز مبهجة ومتصاعدة
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(440, now); // A4
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-      osc.start(now);
-      osc.stop(now + 0.35);
-
-    } else if (type === 'wrong') {
-      // نغمة إجابة خاطئة منخفضة
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(220, now);
-      osc.frequency.linearRampToValueAtTime(130, now + 0.25);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-      osc.start(now);
-      osc.stop(now + 0.3);
-
-    } else if (type === 'empty') {
-      // نغمة نفاذ الرصيد أو القلوب
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(300, now);
-      osc.frequency.setValueAtTime(200, now + 0.1);
-      osc.frequency.setValueAtTime(150, now + 0.2);
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-      osc.start(now);
-      osc.stop(now + 0.4);
-
-    } else if (type === 'click') {
-      // صوت نقرة خفيفة عند كشف حرف أو ضغط زر
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, now);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-      osc.start(now);
-      osc.stop(now + 0.08);
+    var audio = SOUND_EFFECTS[type];
+    if (audio) {
+      audio.currentTime = 0;
+      audio.volume = 0.6;
+      audio.play().catch(function() {});
     }
   } catch (e) {
-    console.warn('Audio API error:', e);
+    console.warn('تعذر تشغيل الصوت:', e);
   }
 }
 
-// تبديل تفعيل أو كتم الصوت
 function toggleSound() {
   playerData.soundEnabled = !playerData.soundEnabled;
   savePlayerData();
@@ -106,7 +55,7 @@ function showScreen(screenId) {
   }
 }
 
-// استعادة القلوب والمؤقت
+// ================= استعادة القلوب والعداد التنازلي =================
 function checkHeartsRecovery() {
   if (playerData.hearts < 3) {
     var now = Date.now();
@@ -159,6 +108,7 @@ setInterval(function() {
   updateHeartTimerDisplay();
 }, 1000);
 
+// ================= تسجيل الدخول وإدارة المستخدم =================
 function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
@@ -231,6 +181,7 @@ function handleAuthLogin() {
       } else {
         playerData.maxStage = 1;
         playerData.coins = 100;
+        playerData.hearts = 3;
         pushPlayerDataToSheet();
       }
       savePlayerData();
@@ -283,13 +234,13 @@ function updateUI() {
     if (hEl) hEl.innerText = playerData.hearts !== undefined ? playerData.hearts : 3;
   }
 
-  // تحديث أيقونة الصوت
   var soundBtns = document.querySelectorAll('.sound-toggle-btn');
   soundBtns.forEach(function(btn) {
     btn.innerText = playerData.soundEnabled ? '🔊' : '🔇';
   });
 }
 
+// ================= التنقل والشاشات =================
 function openMapScreen() {
   playSound('click');
   syncPlayerData(playerData.phone);
