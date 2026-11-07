@@ -2,48 +2,79 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=30000">
+
+  <!-- أيقونة التبويب وشاشات التطبيق -->
+  <link rel="icon" type="image/jpeg" href="bg.jpg">
+  <link rel="apple-touch-icon" href="bg.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b4d3e">
+
+  <link rel="stylesheet" href="style.css?v=999999">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+  
   <style>
+    /* فرض ظهور خلفية المسجد بالكامل على الشاشة الرئيسية */
+    #screen-home {
+      background: #f7fafc url('bg.jpg') no-repeat center center !important;
+      background-size: cover !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* الشريط العلوي الشفاف والأنيق */
+    .top-player-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(5px);
+    }
+
+    .player-pill, .hearts-pill, .stat-badge, .sound-toggle-btn {
+      background: #ffffff !important;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .sound-toggle-btn {
+      width: 38px;
+      height: 38px;
+      font-size: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ضبط تموضع عبارة التوحيد داخل الإطار الزخرفي السفلي */
     .banner-wrapper {
       position: relative;
       width: 100%;
+      max-width: 320px;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 15px;
-      margin-bottom: 25px;
+      margin: 0 auto 15px auto;
     }
+
     .banner-inside-text {
-      position: absolute;
-      top: 52%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       font-family: 'Tajawal', sans-serif;
       font-size: 26px;
       font-weight: 900;
       color: #123d2b;
       white-space: nowrap;
       pointer-events: none;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
       letter-spacing: 0.5px;
     }
-    .hearts-pill {
-      background: #ffffff;
-      border: 2px solid #E2E8F0;
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 15px;
-      font-weight: bold;
-      color: #E53E3E;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-    }
+
     #heart-timer {
       font-size: 11px;
       color: #718096;
@@ -52,18 +83,10 @@
       direction: ltr;
       display: inline-block;
     }
-    .sound-toggle-btn {
-      background: #ffffff;
-      border: 2px solid #E2E8F0;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+    .overlay-content {
+      padding: 16px 20px 24px 20px;
+      background: linear-gradient(0deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 100%);
     }
   </style>
 </head>
@@ -95,7 +118,6 @@
 
       <div class="overlay-content">
         <div class="banner-wrapper">
-          <div class="islamic-banner-frame"></div>
           <span class="banner-inside-text">لَا إِلٰهَ إِلَّا اللّٰه</span>
         </div>
 
@@ -202,12 +224,12 @@
         <div style="text-align: right; font-size: 14px; line-height: 1.6; color: #2D3748;">
           <p style="margin-bottom: 12px; font-weight: bold; color: #1b4d3e; font-size: 16px; text-align: center;">🎯 عن لعبة فِطنة</p>
           <p style="margin-bottom: 16px;">
-            لعبة فِطنة تسعى لإثراء المعرفة الإسلامية بأسلوب ممتع وشيق، لربط القلوب والأنفس بآيات القرآن العظيم، والسيرة النبوية العطرة، والتاريخ الإسلامي المجيد.
+            لعبة فِطنة هي منصة تفاعلية هادفة، تسعى لإثراء المعرفة الإسلامية بأسلوب ممتع وشيق، لربط القلوب والأنفس بآيات القرآن العظيم، والسيرة النبوية العطرة، والتاريخ الإسلامي المجيد.
           </p>
 
           <p style="margin-bottom: 12px; font-weight: bold; color: #D69E2E; font-size: 16px; text-align: center;">📖 سطور من نور</p>
           <p style="margin-bottom: 16px;">
-            جزء من مبادرتنا لإضاءة الدروب بعبارات إيمانية، ومقتطفات تفاعلية، وقصص ملهمة تثري يومك بالإيمان. @LISTEN.091.
+            جزء من مبادرتنا لإضاءة الدروب بعبارات إيمانية، ومقتطفات تفاعلية، وقصص ملهمة تثري يومك بالإيمان. بالتعاون مع صفحة الإنستغرام @LISTEN.091.
           </p>
 
           <p style="margin-bottom: 16px; text-align: center; font-weight: bold; color: #718096;">
@@ -220,7 +242,7 @@
             📸 تابعنا على إنستغرام (@LISTEN.091)
           </a>
           <a href="https://wa.me/963932001377?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%20%D9%81%D8%B1%D9%8A%D9%82%20%D9%81%D9%90%D8%B7%D9%86%D8%A9%D8%8C%20%D9%84%D8%AF%D9%8A%20%D9%85%D9%82%D8%AA%D8%B1%D8%AD%20%D8%A3%D9%88%20%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%AD%D9%88%D9%84%20%D8%A7%D9%84%D9%84%D8%B9%D8%A8%D8%A9..." target="_blank" class="btn btn-secondary" style="background: #25D366; color: #FFF; border-color: #128C7E; box-shadow: 0 4px 0 #075E54; text-align: center; text-decoration: none; display: block; padding-top: 10px;">
-            💬 للإقتراحات تواصل معنا
+            💬 تواصل واقترح تطوير أو بلغ عن خطأ (واتساب)
           </a>
         </div>
         <button class="btn btn-secondary" onclick="closeModal('about-modal')">إغلاق</button>
@@ -243,10 +265,10 @@
 
   </div>
 
-  <script src="app.js?v=30000"></script>
-  <script src="stages_data.js?v=30000"></script>
-  <script src="map.js?v=30000"></script>
-  <script src="quiz.js?v=30000"></script>
+  <script src="app.js?v=999999"></script>
+  <script src="stages_data.js?v=999999"></script>
+  <script src="map.js?v=999999"></script>
+  <script src="quiz.js?v=999999"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
