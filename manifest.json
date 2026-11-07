@@ -1,0 +1,21 @@
+{
+  "name": "فِطنة - ألغاز إسلامية",
+  "short_name": "فِطنة",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1b4d3e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "bg.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "bg.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
