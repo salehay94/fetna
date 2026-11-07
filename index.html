@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=14000">
+  <link rel="stylesheet" href="style.css?v=30000">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
   <style>
     .banner-wrapper {
@@ -52,6 +52,19 @@
       direction: ltr;
       display: inline-block;
     }
+    .sound-toggle-btn {
+      background: #ffffff;
+      border: 2px solid #E2E8F0;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
   </style>
 </head>
 <body>
@@ -59,7 +72,7 @@
   <div class="mobile-frame">
 
     <!-- 1. شاشة تسجيل الدخول -->
-    <section id="screen-auth" class="screen auth-bg">
+    <section id="screen-auth" class="screen">
       <div class="auth-box">
         <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
         <p class="auth-sub">أدخل اسمك ورقم هاتفك لمتابعة وحفظ تقدمك</p>
@@ -72,9 +85,10 @@
     </section>
 
     <!-- 2. الشاشة الرئيسية -->
-    <section id="screen-home" class="screen home-bg">
+    <section id="screen-home" class="screen">
       <div class="top-player-bar">
         <div class="player-pill" onclick="openModal('profile-modal')">👤 <span id="display-player-name">اللاعب</span> ⚙️</div>
+        <button class="sound-toggle-btn" onclick="toggleSound()" title="كتم / تشغيل الصوت">🔊</button>
         <div class="hearts-pill" onclick="openHeartsShopModal()">❤️ <span id="home-hearts">3</span>/3 <span id="heart-timer"></span></div>
         <div class="stat-badge"><span id="home-coins">100</span> نقطة</div>
       </div>
@@ -98,6 +112,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
         <h2>خريطة المراحل</h2>
+        <button class="sound-toggle-btn" onclick="toggleSound()">🔊</button>
         <div class="hearts-pill" onclick="openHeartsShopModal()">❤️ <span id="map-hearts">3</span></div>
         <div class="stat-badge"><span id="map-coins">100</span> نقطة</div>
       </header>
@@ -109,6 +124,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="openMapScreen()">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
+        <button class="sound-toggle-btn" onclick="toggleSound()">🔊</button>
         <div class="hearts-pill" onclick="openHeartsShopModal()">❤️ <span id="game-hearts">3</span></div>
         <div class="stat-badge"><span id="game-coins">100</span> نقطة</div>
       </header>
@@ -172,7 +188,7 @@
             ❤️❤️❤️ شحن كامل (120 نقطة)
           </button>
         </div>
-        <button class="btn btn-secondary" onclick="closeModal('hearts-shop-modal')">إلغلاق</button>
+        <button class="btn btn-secondary" onclick="closeModal('hearts-shop-modal')">إغلاق</button>
       </div>
     </div>
 
@@ -203,7 +219,6 @@
           <a href="https://instagram.com/LISTEN.091" target="_blank" class="btn btn-primary" style="background: #E1306C; box-shadow: 0 4px 0 #8a1f43; text-align: center; text-decoration: none; display: block; padding-top: 10px;">
             📸 تابعنا على إنستغرام (@LISTEN.091)
           </a>
-          <!-- زر واتساب المشفر يفتح محادثة مباشرة مع رقم +963932001377 -->
           <a href="https://wa.me/963932001377?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%20%D9%81%D8%B1%D9%8A%D9%82%20%D9%81%D9%90%D8%B7%D9%86%D8%A9%D8%8C%20%D9%84%D8%AF%D9%8A%20%D9%85%D9%82%D8%AA%D8%B1%D8%AD%20%D8%A3%D9%88%20%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%AD%D9%88%D9%84%20%D8%A7%D9%84%D9%84%D8%B9%D8%A8%D8%A9..." target="_blank" class="btn btn-secondary" style="background: #25D366; color: #FFF; border-color: #128C7E; box-shadow: 0 4px 0 #075E54; text-align: center; text-decoration: none; display: block; padding-top: 10px;">
             💬 تواصل واقترح تطوير أو بلغ عن خطأ (واتساب)
           </a>
@@ -228,10 +243,10 @@
 
   </div>
 
-  <script src="app.js?v=14000"></script>
-  <script src="stages_data.js?v=14000"></script>
-  <script src="map.js?v=14000"></script>
-  <script src="quiz.js?v=14000"></script>
+  <script src="app.js?v=30000"></script>
+  <script src="stages_data.js?v=30000"></script>
+  <script src="map.js?v=30000"></script>
+  <script src="quiz.js?v=30000"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
