@@ -4,7 +4,7 @@ var targetAnswer = '';
 
 function startStage(stageNumber) {
   if (playerData.hearts <= 0) {
-    alert('عذراً، نفدت قلوبك! انتظر 15 دقيقة لاستعادة قلب ❤️');
+    openHeartsShopModal();
     return;
   }
 
@@ -223,7 +223,7 @@ function handleStageFail() {
     if (resDesc) resDesc.innerText = 'خسرت قلباً! تبقى لديك ' + playerData.hearts + ' قلوب.';
     if (resBtn) resBtn.innerText = 'إعادة المحاولة';
   } else {
-    if (resDesc) resDesc.innerText = 'نفدت قلوبك! انتظر 15 دقيقة لاستعادة قلب ❤️';
+    if (resDesc) resDesc.innerText = 'نفدت قلوبك! يمكنك شحن القلوب بالنقاط أو الانتظار ⏳';
     if (resBtn) resBtn.innerText = 'العودة للرئيسية';
   }
 
@@ -236,6 +236,7 @@ function handleResultDismiss() {
 
   if (playerData.hearts <= 0) {
     showScreen('screen-home');
+    openHeartsShopModal();
     return;
   }
 
