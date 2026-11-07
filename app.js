@@ -6,10 +6,10 @@ var playerData = {
   maxStage: 1,
   coins: 100,
   hearts: 3,
-  lastHeartTime: Date.now()
+  lastHeartTime: null
 };
 
-var HEART_RECOVERY_TIME = 15 * 60 * 1000; // 15 دقيقة لكل قلب
+var HEART_RECOVERY_TIME = 15 * 60 * 1000; // 15 دقيقة بالملي ثانية
 
 function showScreen(screenId) {
   var screens = document.querySelectorAll('.screen');
@@ -22,28 +22,78 @@ function showScreen(screenId) {
   }
 }
 
+// فحص واستعادة القلوب بدقة بالاعتماد على تاريخ وقت حفظ حقيقي في المتصفح
 function checkHeartsRecovery() {
   if (playerData.hearts < 3) {
     var now = Date.now();
-    var elapsed = now - (playerData.lastHeartTime || now);
+    
+    if (!playerData.lastHeartTime) {
+      playerData.lastHeartTime = now;
+      savePlayerData();
+    }
+
+    var elapsed = now - playerData.lastHeartTime;
+
     if (elapsed >= HEART_RECOVERY_TIME) {
       var recovered = Math.floor(elapsed / HEART_RECOVERY_TIME);
       playerData.hearts = Math.min(3, playerData.hearts + recovered);
-      playerData.lastHeartTime = now;
+      
+      if (playerData.hearts >= 3) {
+        playerData.lastHeartTime = null;
+      } else {
+        playerData.lastHeartTime = playerData.lastHeartTime + (recovered * HEART_RECOVERY_TIME);
+      }
+      
       savePlayerData();
       updateUI();
     }
+  } else {
+    playerData.lastHeartTime = null;
   }
 }
-setInterval(checkHeartsRecovery, 5000);
+
+// تحديث وعرض العداد التنازلي للقلوب لحظة بلحظة
+function updateHeartTimerDisplay() {
+  var timerEl = document.getElementById('heart-timer');
+  if (!timerEl) return;
+
+  if (playerData.hearts < 3 && playerData.lastHeartTime) {
+    var now = Date.now();
+    var elapsed = now - playerData.lastHeartTime;
+    var timeLeft = HEART_RECOVERY_TIME - elapsed;
+
+    if (timeLeft > 0) {
+      var minutes = Math.floor(timeLeft / 60000);
+      var seconds = Math.floor((timeLeft % 60000) / 1000);
+      
+      var strMin = minutes < 10 ? '0' + minutes : minutes;
+      var strSec = seconds < 10 ? '0' + seconds : seconds;
+      
+      timerEl.innerText = '(' + strMin + ':' + strSec + ' ⏳)';
+    } else {
+      timerEl.innerText = '';
+    }
+  } else {
+    timerEl.innerText = '';
+  }
+}
+
+setInterval(function() {
+  checkHeartsRecovery();
+  updateHeartTimerDisplay();
+}, 1000);
 
 function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
     try {
-      playerData = JSON.parse(saved);
-      if (playerData.hearts === undefined) playerData.hearts = 3;
-      if (!playerData.lastHeartTime) playerData.lastHeartTime = Date.now();
+      var loadedData = JSON.parse(saved);
+      playerData.name = loadedData.name || '';
+      playerData.phone = loadedData.phone || '';
+      playerData.maxStage = loadedData.maxStage || 1;
+      playerData.coins = loadedData.coins || 100;
+      playerData.hearts = loadedData.hearts !== undefined ? loadedData.hearts : 3;
+      playerData.lastHeartTime = loadedData.lastHeartTime || null;
 
       if (playerData && playerData.phone) {
         checkHeartsRecovery();
@@ -60,15 +110,13 @@ function checkExistingUser() {
 function syncPlayerData(phone) {
   if (!APPS_SCRIPT_URL || !phone) return;
   fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(phone))
-    .then(function(res) {
-      if (!res.ok) throw new Error('Network error');
-      return res.json();
-    })
+    .then(function(res) { return res.json(); })
     .then(function(resData) {
       if (resData && resData.status === 'success') {
         playerData.maxStage = Number(resData.maxStage) || 1;
         playerData.coins = Number(resData.coins) || 100;
         if (resData.name) playerData.name = resData.name;
+        
         savePlayerData();
         updateUI();
         if (typeof renderMapNodes === 'function') renderMapNodes();
@@ -86,7 +134,6 @@ function handleAuthLogin() {
   var name = nameInput ? nameInput.value.trim() : '';
   var rawPhone = phoneInput ? phoneInput.value.trim() : '';
 
-  // تجريد الصفر الأيسر تلقائياً لمطابقة الشيت
   var cleanPhone = rawPhone.replace(/[^0-9]/g, '').replace(/^0+/, '');
 
   if (!name || !cleanPhone) {
@@ -94,8 +141,23 @@ function handleAuthLogin() {
     return;
   }
 
+  var saved = localStorage.getItem('fetnah_user_phone_session');
+  var existingHearts = 3;
+  var existingTime = null;
+  if (saved) {
+    try {
+      var old = JSON.parse(saved);
+      if (old.phone === cleanPhone) {
+        existingHearts = old.hearts !== undefined ? old.hearts : 3;
+        existingTime = old.lastHeartTime || null;
+      }
+    } catch (e) {}
+  }
+
   playerData.name = name;
   playerData.phone = cleanPhone;
+  playerData.hearts = existingHearts;
+  playerData.lastHeartTime = existingTime;
 
   fetch(APPS_SCRIPT_URL + '?action=get_player&phone=' + encodeURIComponent(cleanPhone))
     .then(function(res) { return res.json(); })
@@ -107,7 +169,10 @@ function handleAuthLogin() {
       } else {
         playerData.maxStage = 1;
         playerData.coins = 100;
-        playerData.hearts = 3;
+        if (playerData.hearts === 3) {
+          playerData.hearts = 3;
+          playerData.lastHeartTime = null;
+        }
         pushPlayerDataToSheet();
       }
       savePlayerData();
@@ -171,7 +236,7 @@ function openMapScreen() {
 
 function continueCurrentStage() {
   if (playerData.hearts <= 0) {
-    alert('نفدت قلوبك! انتظر قليلاً حتى يعود لك قلب ❤️');
+    openHeartsShopModal();
     return;
   }
   if (typeof stages === 'undefined' || stages.length === 0) {
@@ -181,6 +246,35 @@ function continueCurrentStage() {
   var target = playerData.maxStage || 1;
   if (target > stages.length) target = stages.length;
   if (typeof startStage === 'function') startStage(target);
+}
+
+// منبثقات من نحن وشراء القلوب
+function openAboutModal() {
+  openModal('about-modal');
+}
+
+function openHeartsShopModal() {
+  openModal('hearts-shop-modal');
+}
+
+function buyHearts(amount, cost) {
+  if (playerData.coins < cost) {
+    alert('عذراً، نقاطك غير كافية لإجراء الشراء! (المطلوب ' + cost + ' نقطة)');
+    return;
+  }
+  
+  playerData.coins -= cost;
+  playerData.hearts = Math.min(3, playerData.hearts + amount);
+  
+  if (playerData.hearts >= 3) {
+    playerData.lastHeartTime = null;
+  }
+  
+  savePlayerData();
+  updateUI();
+  pushPlayerDataToSheet();
+  closeModal('hearts-shop-modal');
+  alert('تم شحن القلوب بنجاح! ❤️');
 }
 
 function openModal(id) {
@@ -194,8 +288,8 @@ function closeModal(id) {
 }
 
 function logoutPlayer() {
-  localStorage.removeItem('fetnah_user_phone_session');
-  playerData = { name: '', phone: '', maxStage: 1, coins: 100, hearts: 3 };
+  var saved = localStorage.getItem('fetnah_user_phone_session');
+  playerData = { name: '', phone: '', maxStage: 1, coins: 100, hearts: 3, lastHeartTime: null };
   closeModal('profile-modal');
   showScreen('screen-auth');
 }
