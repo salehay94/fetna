@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=11000">
+  <link rel="stylesheet" href="style.css?v=14000">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
   <style>
     .banner-wrapper {
@@ -42,6 +42,15 @@
       display: flex;
       align-items: center;
       gap: 5px;
+      cursor: pointer;
+    }
+    #heart-timer {
+      font-size: 11px;
+      color: #718096;
+      font-weight: bold;
+      margin-right: 4px;
+      direction: ltr;
+      display: inline-block;
     }
   </style>
 </head>
@@ -66,7 +75,7 @@
     <section id="screen-home" class="screen home-bg">
       <div class="top-player-bar">
         <div class="player-pill" onclick="openModal('profile-modal')">👤 <span id="display-player-name">اللاعب</span> ⚙️</div>
-        <div class="hearts-pill">❤️ <span id="home-hearts">3</span>/3</div>
+        <div class="hearts-pill" onclick="openHeartsShopModal()">❤️ <span id="home-hearts">3</span>/3 <span id="heart-timer"></span></div>
         <div class="stat-badge"><span id="home-coins">100</span> نقطة</div>
       </div>
 
@@ -79,6 +88,7 @@
         <div class="action-buttons">
           <button class="btn btn-primary" onclick="continueCurrentStage()">متابعة اللعب</button>
           <button class="btn btn-secondary" onclick="openMapScreen()">خريطة المراحل</button>
+          <button class="btn" style="background: #FFF; border: 2px solid #D69E2E; color: #B7791F; box-shadow: 0 4px 0 #FEFCBF;" onclick="openAboutModal()">من نحن - سطور من نور ✨</button>
         </div>
       </div>
     </section>
@@ -88,7 +98,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
         <h2>خريطة المراحل</h2>
-        <div class="hearts-pill">❤️ <span id="map-hearts">3</span></div>
+        <div class="hearts-pill" onclick="openHeartsShopModal()">❤️ <span id="map-hearts">3</span></div>
         <div class="stat-badge"><span id="map-coins">100</span> نقطة</div>
       </header>
       <div class="map-path" id="map-container"></div>
@@ -99,7 +109,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="openMapScreen()">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
-        <div class="hearts-pill">❤️ <span id="game-hearts">3</span></div>
+        <div class="hearts-pill" onclick="openHeartsShopModal()">❤️ <span id="game-hearts">3</span></div>
         <div class="stat-badge"><span id="game-coins">100</span> نقطة</div>
       </header>
 
@@ -113,16 +123,13 @@
         <p id="question-text">جاري تحميل السؤال...</p>
       </div>
 
-      <!-- واجهة تجميع الحروف -->
       <div id="letters-mode-area">
         <div id="answer-boxes" class="answer-row"></div>
         <div class="letters-keyboard" id="letters-keyboard"></div>
       </div>
 
-      <!-- واجهة الاختيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
 
-      <!-- واجهة صح أو خطأ -->
       <div id="tf-mode-area" class="tf-container" style="display: none;">
         <button class="tf-btn tf-true" onclick="checkTrueFalseAnswer('صح')">
           <span class="tf-icon">✔️</span>
@@ -134,7 +141,6 @@
         </button>
       </div>
 
-      <!-- نافذة النتيجة -->
       <div id="result-modal" class="result-modal-overlay">
         <div class="result-card" id="result-card-box">
           <div class="result-icon" id="result-icon">🎉</div>
@@ -148,6 +154,63 @@
         </div>
       </div>
     </section>
+
+    <!-- منبثقة شراء القلوب بالنقاط -->
+    <div id="hearts-shop-modal" class="modal-overlay">
+      <div class="modal-card" style="border-color: #E53E3E;">
+        <div class="modal-header">
+          <h3>شحن القلوب ❤️</h3>
+          <button class="close-btn" onclick="closeModal('hearts-shop-modal')">✕</button>
+        </div>
+        <p class="store-desc" style="text-align: center; margin-bottom: 20px;">احصل على قلوب إضافية الآن لمواصلة اللعب دون انتظار!</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+          <button class="btn btn-primary" style="background: #E53E3E; box-shadow: 0 4px 0 #9B2C2C;" onclick="buyHearts(1, 50)">
+            ❤️ شراء قلب واحد (50 نقطة)
+          </button>
+          <button class="btn btn-primary" style="background: #D69E2E; box-shadow: 0 4px 0 #975A16;" onclick="buyHearts(3, 120)">
+            ❤️❤️❤️ شحن كامل (120 نقطة)
+          </button>
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal('hearts-shop-modal')">إلغلاق</button>
+      </div>
+    </div>
+
+    <!-- منبثقة "من نحن - سطور من نور" -->
+    <div id="about-modal" class="modal-overlay">
+      <div class="modal-card" style="border-color: #588157; max-height: 85vh; overflow-y: auto;">
+        <div class="modal-header">
+          <h3>من نحن - سطور من نور ✨</h3>
+          <button class="close-btn" onclick="closeModal('about-modal')">✕</button>
+        </div>
+        <div style="text-align: right; font-size: 14px; line-height: 1.6; color: #2D3748;">
+          <p style="margin-bottom: 12px; font-weight: bold; color: #1b4d3e; font-size: 16px; text-align: center;">🎯 عن لعبة فِطنة</p>
+          <p style="margin-bottom: 16px;">
+            لعبة فِطنة هي منصة تفاعلية هادفة، تسعى لإثراء المعرفة الإسلامية بأسلوب ممتع وشيق، لربط القلوب والأنفس بآيات القرآن العظيم، والسيرة النبوية العطرة، والتاريخ الإسلامي المجيد.
+          </p>
+
+          <p style="margin-bottom: 12px; font-weight: bold; color: #D69E2E; font-size: 16px; text-align: center;">📖 سطور من نور</p>
+          <p style="margin-bottom: 16px;">
+            جزء من مبادرتنا لإضاءة الدروب بعبارات إيمانية، ومقتطفات تفاعلية، وقصص ملهمة تثري يومك بالإيمان. بالتعاون مع صفحة الإنستغرام @LISTEN.091.
+          </p>
+
+          <p style="margin-bottom: 16px; text-align: center; font-weight: bold; color: #718096;">
+            تابعونا وشاركونا الأجر 👇
+          </p>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+          <a href="https://instagram.com/LISTEN.091" target="_blank" class="btn btn-primary" style="background: #E1306C; box-shadow: 0 4px 0 #8a1f43; text-align: center; text-decoration: none; display: block; padding-top: 10px;">
+            📸 تابعنا على إنستغرام (@LISTEN.091)
+          </a>
+          <!-- زر واتساب المشفر يفتح محادثة مباشرة مع رقم +963932001377 -->
+          <a href="https://wa.me/963932001377?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%20%D9%81%D8%B1%D9%8A%D9%82%20%D9%81%D9%90%D8%B7%D9%86%D8%A9%D8%8C%20%D9%84%D8%AF%D9%8A%20%D9%85%D9%82%D8%AA%D8%B1%D8%AD%20%D8%A3%D9%88%20%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%AD%D9%88%D9%84%20%D8%A7%D9%84%D9%84%D8%B9%D8%A8%D8%A9..." target="_blank" class="btn btn-secondary" style="background: #25D366; color: #FFF; border-color: #128C7E; box-shadow: 0 4px 0 #075E54; text-align: center; text-decoration: none; display: block; padding-top: 10px;">
+            💬 تواصل واقترح تطوير أو بلغ عن خطأ (واتساب)
+          </a>
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal('about-modal')">إغلاق</button>
+      </div>
+    </div>
 
     <!-- نافذة الحساب الشخصي -->
     <div id="profile-modal" class="modal-overlay">
@@ -165,10 +228,10 @@
 
   </div>
 
-  <script src="app.js?v=11000"></script>
-  <script src="stages_data.js?v=11000"></script>
-  <script src="map.js?v=11000"></script>
-  <script src="quiz.js?v=11000"></script>
+  <script src="app.js?v=14000"></script>
+  <script src="stages_data.js?v=14000"></script>
+  <script src="map.js?v=14000"></script>
+  <script src="quiz.js?v=14000"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
