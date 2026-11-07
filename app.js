@@ -1,4 +1,4 @@
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIEGfaGfm-3OSsxmgKX3C8ho4hsf_eN2c78G2TcQ8bs5QGOzJzsnzssor49ADvwDc9Ng/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1ThCiccGEnrpNuqs6rDxuQKLeZudF0KrUH2X9pPpfleOhQwIMGbAdxU64qn1ksYxh/exec';
 
 var playerData = {
   name: '',
@@ -10,9 +10,9 @@ var playerData = {
   soundEnabled: true
 };
 
-var HEART_RECOVERY_TIME = 15 * 60 * 1000; // 15 دقيقة لكل قلب
+var HEART_RECOVERY_TIME = 15 * 60 * 1000;
 
-// ================= نظام المؤثرات الصوتية الحقيقية (MP3 عالية النقاء) =================
+// المؤثرات الصوتية MP3
 var SOUND_EFFECTS = {
   correct: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
   wrong: new Audio('https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3'),
@@ -26,12 +26,10 @@ function playSound(type) {
     var audio = SOUND_EFFECTS[type];
     if (audio) {
       audio.currentTime = 0;
-      audio.volume = 0.6;
+      audio.volume = 0.55;
       audio.play().catch(function() {});
     }
-  } catch (e) {
-    console.warn('تعذر تشغيل الصوت:', e);
-  }
+  } catch (e) {}
 }
 
 function toggleSound() {
@@ -41,7 +39,7 @@ function toggleSound() {
   if (playerData.soundEnabled) playSound('click');
 }
 
-// ================= إدارة الشاشات والتنقل =================
+// عزل الشاشات ومنع التداخل
 function showScreen(screenId) {
   var screens = document.querySelectorAll('.screen');
   for (var i = 0; i < screens.length; i++) {
@@ -55,7 +53,7 @@ function showScreen(screenId) {
   }
 }
 
-// ================= استعادة القلوب والعداد التنازلي =================
+// استعادة القلوب والمؤقت
 function checkHeartsRecovery() {
   if (playerData.hearts < 3) {
     var now = Date.now();
@@ -94,7 +92,7 @@ function updateHeartTimerDisplay() {
       var seconds = Math.floor((timeLeft % 60000) / 1000);
       var strMin = minutes < 10 ? '0' + minutes : minutes;
       var strSec = seconds < 10 ? '0' + seconds : seconds;
-      timerEl.innerText = '(' + strMin + ':' + strSec + ' ⏳)';
+      timerEl.innerText = '(' + strMin + ':' + strSec + ')';
     } else {
       timerEl.innerText = '';
     }
@@ -108,7 +106,6 @@ setInterval(function() {
   updateHeartTimerDisplay();
 }, 1000);
 
-// ================= تسجيل الدخول وإدارة المستخدم =================
 function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
@@ -181,7 +178,6 @@ function handleAuthLogin() {
       } else {
         playerData.maxStage = 1;
         playerData.coins = 100;
-        playerData.hearts = 3;
         pushPlayerDataToSheet();
       }
       savePlayerData();
@@ -234,13 +230,14 @@ function updateUI() {
     if (hEl) hEl.innerText = playerData.hearts !== undefined ? playerData.hearts : 3;
   }
 
-  var soundBtns = document.querySelectorAll('.sound-toggle-btn');
-  soundBtns.forEach(function(btn) {
-    btn.innerText = playerData.soundEnabled ? '🔊' : '🔇';
-  });
+  var soundOn = document.getElementById('sound-icon-on');
+  var soundOff = document.getElementById('sound-icon-off');
+  if (soundOn && soundOff) {
+    soundOn.style.display = playerData.soundEnabled ? 'block' : 'none';
+    soundOff.style.display = playerData.soundEnabled ? 'none' : 'block';
+  }
 }
 
-// ================= التنقل والشاشات =================
 function openMapScreen() {
   playSound('click');
   syncPlayerData(playerData.phone);
@@ -290,6 +287,44 @@ function buyHearts(amount, cost) {
   pushPlayerDataToSheet();
   closeModal('hearts-shop-modal');
   alert('تم شحن القلوب بنجاح! ❤️');
+}
+
+// جلب وعرض الإشعارات الحية من الشيت
+function openNotificationsModal() {
+  playSound('click');
+  var dot = document.getElementById('notif-dot');
+  if (dot) dot.style.display = 'none';
+
+  var container = document.getElementById('notif-list-container');
+  if (container) {
+    container.innerHTML = '<p style="text-align:center; color:#718096; padding: 20px;">جاري تحميل التنبيهات...</p>';
+  }
+
+  openModal('notifications-modal');
+
+  fetch(APPS_SCRIPT_URL + '?action=get_notifications')
+    .then(function(res) { return res.json(); })
+    .then(function(notifs) {
+      if (!container) return;
+      if (Array.isArray(notifs) && notifs.length > 0) {
+        container.innerHTML = '';
+        notifs.forEach(function(item) {
+          var card = document.createElement('div');
+          card.className = 'notif-card-item';
+          card.innerHTML = '<h4>' + item.title + '</h4>' +
+                           '<p>' + item.body + '</p>' +
+                           '<span class="notif-time">' + (item.date || '') + '</span>';
+          container.appendChild(card);
+        });
+      } else {
+        container.innerHTML = '<p style="text-align:center; color:#718096; padding: 20px;">لا توجد إشعارات جديدة حالياً 🕊️</p>';
+      }
+    })
+    .catch(function() {
+      if (container) {
+        container.innerHTML = '<p style="text-align:center; color:#e53e3e; padding: 20px;">تعذر تحميل الإشعارات حالياً.</p>';
+      }
+    });
 }
 
 function openModal(id) {
