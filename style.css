@@ -39,9 +39,9 @@ body {
   }
 }
 
-/* إدارة الشاشات وتأثير التنقل */
+/* إدارة الشاشات وتأمين عدم تداخل شاشة الدخول مع غيرها إطلاقاً */
 .screen {
-  display: none;
+  display: none !important;
   flex-direction: column;
   width: 100%;
   height: 100%;
@@ -50,7 +50,7 @@ body {
 }
 
 .screen.active {
-  display: flex;
+  display: flex !important;
 }
 
 /* 1. شاشة تسجيل الدخول */
@@ -102,9 +102,9 @@ body {
   border-color: #2e7d32;
 }
 
-/* 2. الشاشة الرئيسية واللافتة */
+/* 2. الشاشة الرئيسية مع صورة الخلفية bg.jpg المعدلة */
 .home-bg {
-background: #f0fdf4 url('bg.jpg') no-repeat center center;
+  background: #f0fdf4 url('bg.jpg') no-repeat center center;
   background-size: cover;
   display: flex;
   flex-direction: column;
@@ -146,6 +146,7 @@ background: #f0fdf4 url('bg.jpg') no-repeat center center;
   display: flex;
   align-items: center;
   gap: 5px;
+  cursor: pointer;
 }
 
 .stat-badge {
@@ -275,7 +276,7 @@ background: #f0fdf4 url('bg.jpg') no-repeat center center;
   flex: 1;
   overflow-y: auto;
   padding: 40px 20px;
-  background: #f8fafc url('map_bg.png') repeat-y center top;
+  background: #f8fafc url('bg-map.jpg') repeat-y center top;
   background-size: cover;
   display: flex;
   flex-direction: column-reverse;
