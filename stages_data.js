@@ -2,6 +2,16 @@ var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1ThCiccGEnrpNuq
 var stages = [];
 
 function loadStages() {
+  // 1. قراءة فورية من الذاكرة المحلية إن وجدت لتفتح اللعبة فوراً
+  var cached = localStorage.getItem('fetnah_cached_stages');
+  if (cached) {
+    try {
+      stages = JSON.parse(cached);
+      if (typeof renderMapNodes === 'function') renderMapNodes();
+    } catch (e) {}
+  }
+
+  // 2. تحديث الأسئلة في الخلفية من الشيت بصمت
   fetch(APPS_SCRIPT_URL)
     .then(function(res) {
       if (!res.ok) throw new Error('فشل جلب البيانات: ' + res.status);
@@ -9,7 +19,7 @@ function loadStages() {
     })
     .then(function(data) {
       if (Array.isArray(data) && data.length > 0) {
-        stages = [];
+        var newStages = [];
         for (var i = 0; i < data.length; i++) {
           var item = data[i];
           var stageId = i + 1;
@@ -22,7 +32,7 @@ function loadStages() {
             iconSymbol = '⚖️';
           }
 
-          stages.push({
+          newStages.push({
             id: stageId,
             type: item.type || 'letters',
             question: item.question || '',
@@ -34,24 +44,12 @@ function loadStages() {
           });
         }
 
-        console.log('تم تحميل ' + stages.length + ' مرحلة من الشيت بنجاح.');
-        if (typeof renderMapNodes === 'function') {
-          renderMapNodes();
-        }
-      } else {
-        throw new Error('البيانات فارغة');
+        stages = newStages;
+        localStorage.setItem('fetnah_cached_stages', JSON.stringify(stages));
+        if (typeof renderMapNodes === 'function') renderMapNodes();
       }
     })
     .catch(function(err) {
-      console.warn('تنبيه: تم اعتماد المراحل الاحتياطية:', err);
-      stages = [
-        { id: 1, type: 'letters', icon: '✍️', reward: 5, question: 'ما هي قبلة المسلمين التي يتجهون إليها في صلاتهم؟', answer: 'الكعبة', letters: ['ا', 'ل', 'ك', 'ع', 'ب', 'ة', 'م', 'ق'] },
-        { id: 2, type: 'letters', icon: '✍️', reward: 5, question: 'المدينة المقدسة التي ولد فيها النبي ﷺ', answer: 'مكة', letters: ['م', 'ك', 'ة', 'ب', 'د', 'ر', 'س', 'ع'] },
-        { id: 3, type: 'choices', icon: '🔠', reward: 5, question: 'كم عدد سور القرآن الكريم؟', answer: '114 سورة', choices: ['110 سورة', '112 سورة', '114 سورة', '120 سورة'] },
-        { id: 4, type: 'tf', icon: '⚖️', reward: 5, question: 'فرضت الصلاة في رحلة الإسراء والمعراج', answer: 'صح' }
-      ];
-      if (typeof renderMapNodes === 'function') {
-        renderMapNodes();
-      }
+      console.warn('تنبيه الشيت:', err);
     });
 }
