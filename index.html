@@ -4,23 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>فِطنة - ألغاز وكلمات إسلامية</title>
-  <link rel="stylesheet" href="style.css?v=5000">
+  <link rel="stylesheet" href="style.css?v=9500">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
   <style>
-    .islamic-banner-frame {
+    /* ضبط وتوسيط عبارة التوحيد داخل اللافتة الزخرفية بدقة متناهية */
+    .banner-wrapper {
+      position: relative;
+      width: 100%;
       display: flex;
-      align-items: center;
       justify-content: center;
-      min-height: 70px;
+      align-items: center;
+      margin-top: 15px;
       margin-bottom: 25px;
     }
-    .banner-arabic-text {
+    .banner-inside-text {
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-family: 'Tajawal', sans-serif;
       font-size: 26px;
       font-weight: 900;
-      color: #1b4d3e;
-      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
-      letter-spacing: 1px;
+      color: #123d2b;
+      white-space: nowrap;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+      letter-spacing: 0.5px;
+    }
+    /* شارة القلوب في الشريط العلوي */
+    .hearts-pill {
+      background: #ffffff;
+      border: 2px solid #E2E8F0;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #E53E3E;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
   </style>
 </head>
@@ -32,10 +55,10 @@
     <section id="screen-auth" class="screen auth-bg">
       <div class="auth-box">
         <h2 class="auth-title">تسجيل الدخول إلى فِطنة</h2>
-        <p class="auth-sub">أدخل اسمك ورقم هاتفك لمتابعة وحفظ تقدمك</p>
+        <p class="auth-sub">أدخل اسمك ورقم هاتفك لحفظ ومتابعة تقدمك</p>
         
         <input type="text" id="auth-name" class="auth-input" placeholder="اسم اللاعب" />
-        <input type="text" id="auth-phone" class="auth-input" placeholder="رقم الهاتف (مثال: 09xxxxxxxx)" />
+        <input type="text" id="auth-phone" class="auth-input" placeholder="رقم الهاتف (مثال: 09xxxxxxxx أو 9xxxxxxxx)" />
         
         <button class="btn btn-primary" onclick="handleAuthLogin()">دخول ومتابعة اللعب</button>
       </div>
@@ -45,12 +68,15 @@
     <section id="screen-home" class="screen home-bg">
       <div class="top-player-bar">
         <div class="player-pill" onclick="openModal('profile-modal')">👤 <span id="display-player-name">اللاعب</span> ⚙️</div>
+        <div class="hearts-pill">❤️ <span id="home-hearts">3</span>/3</div>
         <div class="stat-badge"><span id="home-coins">100</span> نقطة</div>
       </div>
 
       <div class="overlay-content">
-        <div class="islamic-banner-frame">
-          <span class="banner-arabic-text">لَا إِلٰهَ إِلَّا اللّٰه</span>
+        <!-- اللافتة مع العبارة بداخلها -->
+        <div class="banner-wrapper">
+          <div class="islamic-banner-frame"></div>
+          <span class="banner-inside-text">لَا إِلٰهَ إِلَّا اللّٰه</span>
         </div>
 
         <div class="action-buttons">
@@ -65,6 +91,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="showScreen('screen-home')">⬅</button>
         <h2>خريطة المراحل</h2>
+        <div class="hearts-pill">❤️ <span id="map-hearts">3</span></div>
         <div class="stat-badge"><span id="map-coins">100</span> نقطة</div>
       </header>
       <div class="map-path" id="map-container"></div>
@@ -75,6 +102,7 @@
       <header class="game-header">
         <button class="nav-back" onclick="openMapScreen()">خروج</button>
         <span id="stage-title" class="stage-indicator">المرحلة 1</span>
+        <div class="hearts-pill">❤️ <span id="game-hearts">3</span></div>
         <div class="stat-badge"><span id="game-coins">100</span> نقطة</div>
       </header>
 
@@ -94,7 +122,7 @@
         <div class="letters-keyboard" id="letters-keyboard"></div>
       </div>
 
-      <!-- واجهة 4 خيارات -->
+      <!-- واجهة الاختيارات -->
       <div id="choice-mode-area" class="choices-container" style="display: none;"></div>
 
       <!-- واجهة صح أو خطأ -->
@@ -109,7 +137,7 @@
         </button>
       </div>
 
-      <!-- نافذة إشعار النتيجة -->
+      <!-- نافذة النتيجة -->
       <div id="result-modal" class="result-modal-overlay">
         <div class="result-card" id="result-card-box">
           <div class="result-icon" id="result-icon">🎉</div>
@@ -124,7 +152,7 @@
       </div>
     </section>
 
-    <!-- نافذة بيانات الحساب -->
+    <!-- نافذة الحساب الشخصي -->
     <div id="profile-modal" class="modal-overlay">
       <div class="modal-card">
         <div class="modal-header">
@@ -140,10 +168,10 @@
 
   </div>
 
-  <script src="app.js?v=5000"></script>
-  <script src="stages_data.js?v=5000"></script>
-  <script src="map.js?v=5000"></script>
-  <script src="quiz.js?v=5000"></script>
+  <script src="app.js?v=9500"></script>
+  <script src="stages_data.js?v=9500"></script>
+  <script src="map.js?v=9500"></script>
+  <script src="quiz.js?v=9500"></script>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       checkExistingUser();
