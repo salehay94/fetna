@@ -3,8 +3,13 @@ var currentInputLetters = [];
 var targetAnswer = '';
 
 function startStage(stageNumber) {
+  if (playerData.hearts <= 0) {
+    alert('عذراً، نفدت قلوبك! انتظر 15 دقيقة لاستعادة قلب ❤️');
+    return;
+  }
+
   if (!stages || stages.length === 0) {
-    alert('لم يتم تحميل المراحل بعد، يرجى الانتظار ثانية واحدة...');
+    alert('جاري تحميل الأسئلة...');
     return;
   }
 
@@ -175,7 +180,6 @@ function handleStageSuccess(reward) {
   savePlayerData();
   updateUI();
 
-  // إرسال فوري ومباشر إلى الشيت دون أي تأخير
   if (typeof pushPlayerDataToSheet === 'function') {
     pushPlayerDataToSheet();
   }
@@ -197,6 +201,13 @@ function handleStageSuccess(reward) {
 }
 
 function handleStageFail() {
+  playerData.hearts = Math.max(0, (playerData.hearts || 3) - 1);
+  if (playerData.hearts < 3 && !playerData.lastHeartTime) {
+    playerData.lastHeartTime = Date.now();
+  }
+  savePlayerData();
+  updateUI();
+
   var resModal = document.getElementById('result-modal');
   var resCard = document.getElementById('result-card-box');
   var resIcon = document.getElementById('result-icon');
@@ -205,10 +216,16 @@ function handleStageFail() {
   var resBtn = document.getElementById('result-btn');
 
   if (resCard) resCard.classList.add('wrong-border');
-  if (resIcon) resIcon.innerText = '❌';
-  if (resTitle) resTitle.innerText = 'إجابة غير صحيحة';
-  if (resDesc) resDesc.innerText = 'حاول مرة أخرى وركّز جيداً!';
-  if (resBtn) resBtn.innerText = 'إعادة المحاولة';
+  if (resIcon) resIcon.innerText = '💔';
+  if (resTitle) resTitle.innerText = 'إجابة غير صحيحة!';
+  
+  if (playerData.hearts > 0) {
+    if (resDesc) resDesc.innerText = 'خسرت قلباً! تبقى لديك ' + playerData.hearts + ' قلوب.';
+    if (resBtn) resBtn.innerText = 'إعادة المحاولة';
+  } else {
+    if (resDesc) resDesc.innerText = 'نفدت قلوبك! انتظر 15 دقيقة لاستعادة قلب ❤️';
+    if (resBtn) resBtn.innerText = 'العودة للرئيسية';
+  }
 
   if (resModal) resModal.style.display = 'flex';
 }
@@ -216,6 +233,11 @@ function handleStageFail() {
 function handleResultDismiss() {
   var resModal = document.getElementById('result-modal');
   if (resModal) resModal.style.display = 'none';
+
+  if (playerData.hearts <= 0) {
+    showScreen('screen-home');
+    return;
+  }
 
   var resTitle = document.getElementById('result-title');
   if (resTitle && resTitle.innerText.indexOf('أحسنت') !== -1) {
