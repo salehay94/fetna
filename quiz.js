@@ -4,9 +4,12 @@ var targetAnswer = '';
 
 function startStage(stageNumber) {
   if (playerData.hearts <= 0) {
+    if (typeof playSound === 'function') playSound('empty');
     openHeartsShopModal();
     return;
   }
+
+  if (typeof playSound === 'function') playSound('click');
 
   if (!stages || stages.length === 0) {
     alert('جاري تحميل الأسئلة...');
@@ -27,7 +30,6 @@ function startStage(stageNumber) {
   if (qText) qText.innerText = stage.question;
 
   var badgeEl = document.getElementById('stage-badge-type');
-  
   var lettersArea = document.getElementById('letters-mode-area');
   var choicesArea = document.getElementById('choice-mode-area');
   var tfArea = document.getElementById('tf-mode-area');
@@ -135,8 +137,9 @@ function setupLettersMode(stage) {
 
 function appendLetter(char, keyIndex) {
   if (currentInputLetters.length >= targetAnswer.length) return;
-  currentInputLetters.push({ char: char, keyIndex: keyIndex });
+  if (typeof playSound === 'function') playSound('click');
 
+  currentInputLetters.push({ char: char, keyIndex: keyIndex });
   var kBtn = document.getElementById('key-' + keyIndex);
   if (kBtn) kBtn.style.visibility = 'hidden';
 
@@ -155,6 +158,8 @@ function appendLetter(char, keyIndex) {
 
 function removeLetterAt(index) {
   if (index >= currentInputLetters.length) return;
+  if (typeof playSound === 'function') playSound('click');
+
   var removed = currentInputLetters.splice(index, 1)[0];
   if (removed && removed.keyIndex !== undefined) {
     var kBtn = document.getElementById('key-' + removed.keyIndex);
@@ -173,6 +178,8 @@ function renderAnswerSlots() {
 }
 
 function handleStageSuccess(reward) {
+  if (typeof playSound === 'function') playSound('correct');
+
   playerData.coins += reward;
   if (currentStageIndex + 1 === playerData.maxStage) {
     playerData.maxStage++;
@@ -201,6 +208,8 @@ function handleStageSuccess(reward) {
 }
 
 function handleStageFail() {
+  if (typeof playSound === 'function') playSound('wrong');
+
   playerData.hearts = Math.max(0, (playerData.hearts || 3) - 1);
   if (playerData.hearts < 3 && !playerData.lastHeartTime) {
     playerData.lastHeartTime = Date.now();
@@ -265,11 +274,13 @@ function useHintRevealLetter() {
     return;
   }
   if (playerData.coins < 20) {
+    if (typeof playSound === 'function') playSound('empty');
     alert('عذراً، لا تملك رصيداً كافياً (المطلوب 20 نقطة)');
     return;
   }
   if (currentInputLetters.length >= targetAnswer.length) return;
 
+  if (typeof playSound === 'function') playSound('click');
   playerData.coins -= 20;
   savePlayerData();
   updateUI();
@@ -290,6 +301,7 @@ function useHintRevealLetter() {
 
 function useHintSkipStage() {
   if (playerData.coins < 50) {
+    if (typeof playSound === 'function') playSound('empty');
     alert('عذراً، لا تملك رصيداً كافياً لتخطي المرحلة (المطلوب 50 نقطة)');
     return;
   }
