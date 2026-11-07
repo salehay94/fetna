@@ -10,9 +10,9 @@ var playerData = {
   soundEnabled: true
 };
 
-var HEART_RECOVERY_TIME = 15 * 60 * 1000;
+var HEART_RECOVERY_TIME = 15 * 60 * 1000; // 15 دقيقة لكل قلب
 
-// المؤثرات الصوتية MP3
+// ================= نظام المؤثرات الصوتية MP3 =================
 var SOUND_EFFECTS = {
   correct: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
   wrong: new Audio('https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3'),
@@ -39,7 +39,7 @@ function toggleSound() {
   if (playerData.soundEnabled) playSound('click');
 }
 
-// عزل الشاشات ومنع التداخل
+// ================= إدارة الشاشات والتنقل =================
 function showScreen(screenId) {
   var screens = document.querySelectorAll('.screen');
   for (var i = 0; i < screens.length; i++) {
@@ -53,7 +53,7 @@ function showScreen(screenId) {
   }
 }
 
-// استعادة القلوب والمؤقت
+// ================= استعادة القلوب والعداد التنازلي =================
 function checkHeartsRecovery() {
   if (playerData.hearts < 3) {
     var now = Date.now();
@@ -106,6 +106,7 @@ setInterval(function() {
   updateHeartTimerDisplay();
 }, 1000);
 
+// ================= تسجيل الدخول والتحقق من الجلسة =================
 function checkExistingUser() {
   var saved = localStorage.getItem('fetnah_user_phone_session');
   if (saved) {
@@ -178,6 +179,7 @@ function handleAuthLogin() {
       } else {
         playerData.maxStage = 1;
         playerData.coins = 100;
+        playerData.hearts = 3;
         pushPlayerDataToSheet();
       }
       savePlayerData();
@@ -238,6 +240,7 @@ function updateUI() {
   }
 }
 
+// ================= التنقل وشاشات اللعب =================
 function openMapScreen() {
   playSound('click');
   syncPlayerData(playerData.phone);
@@ -289,7 +292,7 @@ function buyHearts(amount, cost) {
   alert('تم شحن القلوب بنجاح! ❤️');
 }
 
-// جلب وعرض الإشعارات الحية من الشيت
+// ================= جلب وعرض الإشعارات الحية من الشيت =================
 function openNotificationsModal() {
   playSound('click');
   var dot = document.getElementById('notif-dot');
