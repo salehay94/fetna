@@ -128,7 +128,7 @@ body {
   justify-content: space-between;
 }
 
-/* الشريط العلوي بتجاوب ومرونة فائقة للمساحات الضيقة */
+/* الشريط العلوي */
 .top-player-bar {
   display: flex;
   justify-content: space-between;
@@ -184,7 +184,6 @@ body {
   cursor: default;
 }
 
-/* ضبط شارات الموبايل الصغيرة */
 @media (max-width: 360px) {
   .player-pill { max-width: 75px; }
   .glass-pill { padding: 3px 6px; font-size: 10px; }
@@ -215,12 +214,7 @@ body {
   stroke: #334155;
 }
 
-.heart-svg {
-  width: 13px;
-  height: 13px;
-}
-
-.coin-svg {
+.heart-svg, .coin-svg {
   width: 13px;
   height: 13px;
 }
@@ -243,7 +237,6 @@ body {
   direction: ltr;
 }
 
-/* تحديد المساحات الفارغة لحماية الآية والأزرار السفلية من التداخل */
 .overlay-content {
   padding: 12px 16px 20px 16px;
   display: flex;
@@ -257,7 +250,6 @@ body {
   min-height: 15vh;
 }
 
-/* أزرار الإجراءات */
 .action-buttons {
   width: 100%;
   display: flex;
@@ -318,27 +310,26 @@ body {
   gap: 8px;
 }
 
-.nav-back {
+.nav-back, .nav-back-text {
   background: #f1f5f9;
   border: none;
-  width: 34px;
-  height: 34px;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.nav-back {
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .nav-back-text {
-  background: #f1f5f9;
-  border: none;
   padding: 5px 12px;
-  border-radius: 10px;
   font-size: 13px;
   font-weight: 900;
   color: #475569;
-  cursor: pointer;
 }
 
 .header-right-stats {
@@ -510,39 +501,50 @@ body {
   justify-content: center;
 }
 
-.choices-container {
+/* خيارات الأسئلة المتعددة وتلوين الصواب والخطأ */
+.choices-container, .mcq-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   padding: 0 14px;
   margin: 12px 0;
 }
 
-.choice-btn {
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 11px 14px;
+.choice-btn, .mcq-option-btn {
+  background: #11423a;
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  border-radius: 14px;
+  padding: 13px 16px;
   font-family: 'Tajawal', sans-serif;
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
-  box-shadow: 0 2px 0 #cbd5e1;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #0b2b25;
   cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  display: block;
+  text-align: center;
 }
 
-.choice-btn.correct {
-  background: #dcfce7;
-  border-color: #22c55e;
-  box-shadow: 0 2px 0 #16a34a;
-  color: #15803d;
+.choice-btn:active, .mcq-option-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0b2b25;
 }
 
-.choice-btn.wrong {
-  background: #fee2e2;
-  border-color: #ef4444;
-  box-shadow: 0 2px 0 #dc2626;
-  color: #b91c1c;
+.choice-btn.correct, .mcq-option-btn.correct-answer {
+  background: #27ae60 !important;
+  border-color: #2ecc71 !important;
+  box-shadow: 0 3px 0 #1e8449 !important;
+  color: #ffffff !important;
+}
+
+.choice-btn.wrong, .mcq-option-btn.wrong-answer {
+  background: #c0392b !important;
+  border-color: #e74c3c !important;
+  box-shadow: 0 3px 0 #922b21 !important;
+  color: #ffffff !important;
+  opacity: 0.65;
 }
 
 .tf-container {
